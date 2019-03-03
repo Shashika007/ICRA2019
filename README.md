@@ -1,7 +1,7 @@
+
+# RoboGrinder 2019 IRCA Competition Code
+
 ## Introduction
-
-<img src="images/robot.jpg" style="zoom:100%;display: inline-block; float:middle"/>
-
 RoboRTS is an open source software stack for Real-Time Strategy research on mobile robots, developed by RoboMaster and motivated by [RoboMaster AI Challenge](#competition)
 
 The framework of RoboRTS consists two parts: autonomous mobile robot layer and intelligent decision-making layer.
@@ -11,7 +11,6 @@ The framework of RoboRTS consists two parts: autonomous mobile robot layer and i
 The autonomous mobile robot layer alone can let a robot, offically supported for RoboMaster AI Robot platform, to demonstrate a certain level of intelligence. On its on-board computer runs perception, motion planning, decision modules. It is fully supported in ROS with community driven as well as platform-customized codes and examples. On its MCU, an RT low-level robot controller is implemented to govern the robot driving system.  
 
 **TODO:** Intelligent decision-making layer includes a multi-agent decision-making framework and a game simulator, it will be released soon in the future.
-# IRCA-RobotGrinder
 
 ### Development process
 
