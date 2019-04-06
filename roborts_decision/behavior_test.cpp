@@ -10,7 +10,7 @@
 #include "example_behavior/goal_behavior.h"
 
 
-#include "../blackboard/blackboard.h"
+#include "blackboard/blackboard.h"
 
 
 
@@ -66,7 +66,7 @@ class Inverter : public CompositeNode {
 			}
 			return true;  // default?
 		}	
-}
+};
 
 enum Commands {NONE, CHASE, ESCAPE, PATROL, GETBUFF, GETSUPPLY, SEARCH, GOAL, EXIT};;
 
@@ -86,14 +86,15 @@ struct RobotStatus {
 class CheckSupplyStatus : public Node {  // Each task will be a class (derived from Node of course).
 	private:
 		RobotStatus* status;
+		bool boolInv;
 	public:
-		CheckIfDoorIsOpenTask (RobotStatus* status, bool inv) : status(status) {}
+		CheckSupplyStatus (RobotStatus* status, bool inv) : status(status), boolInv(inv) {}
 		virtual bool run() override {
 			if (status->supply > status->supplyCutOff)
 				std::cout << "Supply amount is sufficient." << std::endl;  // will return true
 			else{
 				std::cout << "Supply amount is insufficient." << std::endl;  // will return false
-				if(inv)
+				if(boolInv)
 					status->command = GETSUPPLY;				
 			}
 			return (status->supply > status->supplyCutOff);
@@ -103,14 +104,15 @@ class CheckSupplyStatus : public Node {  // Each task will be a class (derived f
 class CheckBuffStatus : public Node {  // Each task will be a class (derived from Node of course).
 	private:
 		RobotStatus* status;
+		bool boolInv;
 	public:
-		CheckIfDoorIsOpenTask (RobotStatus* status, bool inv) : status(status) {}
+		CheckBuffStatus (RobotStatus* status, bool inv) : status(status), boolInv(inv)  {}
 		virtual bool run() override {
 			if (status->buffed)
 				std::cout << "Buff is active." << std::endl;  // will return true
 			else{
 				std::cout << "Buff is inactive." << std::endl;  // will return false
-				if(inv)
+				if(boolInv)
 					status->command = GETBUFF;
 			}
 			
@@ -121,14 +123,15 @@ class CheckBuffStatus : public Node {  // Each task will be a class (derived fro
 class CheckLastSeen : public Node {  // Each task will be a class (derived from Node of course).
 	private:
 		RobotStatus* status;
+		bool boolInv;
 	public:
-		CheckIfDoorIsOpenTask (RobotStatus* status, bool inv) : status(status) {}
+		CheckLastSeen (RobotStatus* status, bool inv) : status(status), boolInv(inv) {}
 		virtual bool run() override {
 			if (status->lastSeen_inRange)
 				std::cout << "Last seen enemy in range." << std::endl;  // will return true
 			else{
 				std::cout << "Last seen enemy out of range." << std::endl;  // will return false
-				if(inv)
+				if(boolInv)
 					status->command = PATROL;
 			}
 			
@@ -139,17 +142,18 @@ class CheckLastSeen : public Node {  // Each task will be a class (derived from 
 class CheckHealthStatus : public Node {  // Each task will be a class (derived from Node of course).
 	private:
 		RobotStatus* status;
+		bool boolInv;
 	public:
-		CheckIfDoorIsOpenTask (RobotStatus* status, bool inv) : status(status) {}
+		CheckHealthStatus (RobotStatus* status, bool inv) : status(status) , boolInv(inv) {}
 		virtual bool run() override {
 			if (status->health > status->healthCutOff){
 				std::cout << "Health is sufficient." << std::endl;  // will return true
-				if(!inv)
+				if(!boolInv)
 					status->command = CHASE;
 			}
 			else{
 				std::cout << "Health is insufficient." << std::endl;  // will return false
-				if(inv)
+				if(boolInv)
 					status->command = ESCAPE;				
 			}
 			return (status->health > status->healthCutOff);
@@ -160,7 +164,7 @@ class CheckHealthStatus : public Node {  // Each task will be a class (derived f
 
 /**************** BLACKBOARD UPDATE OF STATUS VALUES*****************/
 
-void updateStatus(Blackboard* blackboard_, RobotStatus* status){
+void updateStatus(RobotStatus* status){
 	
 	//VARS TO BE UPDATED BY BLACKBOARD / REFEREE SYSTEM
 	
@@ -201,8 +205,6 @@ int main(int argc, char **argv) {
 	auto command_thread= std::thread(Command);
 	ros::Rate rate(10);
 	
-	Blackboard* const blackboard_;
-
 	RobotStatus* robotStatus = new RobotStatus {100, 100, false, false, NONE};  
   
 	Sequence* root = new Sequence; // Note that root can be either a Sequence or a Selector, since it has only one child.
@@ -273,7 +275,7 @@ int main(int argc, char **argv) {
 	while(ros::ok()){
 	    ros::spinOnce();
 		robotStatus->command = NONE;
-		updateStatus(blackboard_); //NEED TO UPDATES
+		updateStatus(robotStatus); //NEED TO UPDATES
 		if(!start){
 			while (!root->run()){  // If the operation starting from the root fails, keep trying until it succeeds.
 			
@@ -282,7 +284,7 @@ int main(int argc, char **argv) {
 				//run(robotStatus->command)
 				
 				robotStatus->command = NONE;
-				updateStatus(robotStatus, blackboard_); //NEED TO UPDATES
+				updateStatus(robotStatus); //NEED TO UPDATES
 				
 				//CONTINUE
 				
@@ -290,7 +292,7 @@ int main(int argc, char **argv) {
 			}
 		}
 		start = false;
-		switch (roboStatus->command) {
+		switch (robotStatus->command) {
 		  //back to boot area
 		  case NONE:
 			std::cout << "BOOT BEHAVIOR" << std::endl;
