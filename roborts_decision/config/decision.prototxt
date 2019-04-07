@@ -79,46 +79,13 @@ escape {
 
 buff_point {
 
-  x: 4.15
-  y: 2.85
+  x: 6.35
+  y: 1.65
   z: 0
 
   roll:  0
   pitch: 0
-  yaw:   -0.52 #2.62
-}
-
-buff_point {
-
-  x: 4.35
-  y: 2.65
-  z: 0
-
-  roll:  0
-  pitch: 0
-  yaw:   -0.52
-}
-
-buff_point {
-
-  x: 4.15
-  y: 2.85
-  z: 0
-
-  roll:  0
-  pitch: 0
-  yaw:   -0.52
-}
-
-buff_point {
-
-  x: 4.35
-  y: 2.65
-  z: 0
-
-  roll:  0
-  pitch: 0
-  yaw:   -0.52
+  yaw:   0
 }
 
 search_limit {
@@ -261,7 +228,22 @@ search_region_4 {
   yaw:   -1.57
 }
 
+search_region_4 {
+  x: 6.83
+  y: 3.05
+  z: 0
 
+  roll:  0
+  pitch: 0
+  yaw:   -1.57
+}
 
+supply_point {
+  x: 4.20
+  y: 4.77
+  z: 0
 
-
+  roll:  0
+  pitch: 0
+  yaw:   -1.57
+}
