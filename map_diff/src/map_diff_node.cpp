@@ -4,9 +4,9 @@ nav_msgs::OccupancyGrid ORIG_MAP;
 nav_msgs::OccupancyGridConstPtr currMap;
 bool flag = false;
 
-geometry_msgs::PoseStamped calculateDiff(nav_msgs::OccupancyGrid &result, bool & good);
+geometry_msgs::PoseStamped calculateDiff(nav_msgs::OccupancyGrid &result, bool &good);
 
-geometry_msgs::PoseStamped calculateDiff(nav_msgs::OccupancyGrid &result, bool & good)
+geometry_msgs::PoseStamped calculateDiff(nav_msgs::OccupancyGrid &result, bool &good)
 {
     result.info = currMap->info;
     result.header.frame_id = currMap->header.frame_id;
@@ -34,7 +34,7 @@ geometry_msgs::PoseStamped calculateDiff(nav_msgs::OccupancyGrid &result, bool &
     // const float maxValue = 1.0;
     cv::Mat image(result.info.height, result.info.width, CV_8UC1, result.data.data());
     auto center = findCenter(image, good);
-    if(good)
+    if (good)
     {
         geometry_msgs::PoseStamped msg;
         msg.header.frame_id = currMap->header.frame_id;
@@ -81,10 +81,9 @@ int main(int argc, char **argv)
             nav_msgs::OccupancyGrid msg;
             bool okay;
             auto goalMsg = calculateDiff(msg, okay);
-            if(okay)
+            if (okay)
             {
                 goal.publish(goalMsg);
-
             }
             pub.publish(msg);
         }
