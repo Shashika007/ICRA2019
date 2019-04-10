@@ -1,0 +1,24 @@
+<package>
+    <name>roborts_comm</name>
+    <version>1.0.0</version>
+    <description>
+        The roborts_comm package allows communication between RoboMaster AI Robots
+    </description>
+    <author>Matthew Foran</author>
+    <maintainer email="mjforan@vt.edu">Matthew Foran</maintainer>
+    <license>GPL 3.0 </license>
+    <url>https://github.com/robogrinder/ICRA2019</url>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>tf2_msgs</build_depend>
+    <build_depend>std_msgs</build_depend>
+
+
+    <run_depend>tf2_msgs</run_depend>
+    <run_depend>std_msgs</run_depend>
+
+    <export>
+    </export>
+
+</package>
