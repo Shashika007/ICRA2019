@@ -40,10 +40,25 @@
 #include "armor_detection_algorithms.h"
 #include "gimbal_control.h"
 
+#include <opencv2/opencv.hpp>
+
+
 namespace roborts_detection {
 
 using roborts_common::NodeState;
 using roborts_common::ErrorInfo;
+
+void EnemyMotionModel(cv::Point3f &current, cv::Point3f &predicted)
+{
+	cv::KalmanFilter kf;
+
+}
+
+void EnemyMotionModel_2(cv::Point3f &camera_pos, cv::Point2f global_pos, cv::Point3f &predicted)
+{
+
+
+}
 
 class ArmorDetectionNode {
  public:
