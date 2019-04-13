@@ -48,21 +48,12 @@ namespace roborts_detection {
 using roborts_common::NodeState;
 using roborts_common::ErrorInfo;
 
-void EnemyMotionModel(cv::Point3f &current, cv::Point3f &predicted)
-{
-	cv::KalmanFilter kf;
-
-}
-
-void EnemyMotionModel_2(cv::Point3f &camera_pos, cv::Point2f global_pos, cv::Point3f &predicted)
-{
-
-
-}
-
 class ArmorDetectionNode {
  public:
   explicit ArmorDetectionNode();
+  
+  ~ArmorDetectionNode();
+  
   /**
    * @brief Initializing armor detection algorithm.
    * @return Return the error information.
@@ -93,7 +84,11 @@ class ArmorDetectionNode {
    * @brief Publishing enemy pose information that been calculated by the armor detection algorithm.
    */
   void PublishMsgs();
-  ~ArmorDetectionNode();
+  
+  
+  void InitializeFilter(double time_step, cv::Vec<double, 6> &state);
+  void predict();
+  
  protected:
  private:
   std::shared_ptr<ArmorDetectionBase> armor_detector_;
@@ -117,6 +112,15 @@ class ArmorDetectionNode {
   double z_;
   bool detected_enemy_;
   unsigned long demensions_;
+  
+  //! Enemy Motion Model
+  cv::KalmanFilter kf_;
+  cv::Vec<double, 6> x_k_; // state vector
+  cv::Vec<double, 3> z_k_; // observation vector
+  cv::Vec<double, 3> w_k_; // process noise
+  cv::Vec<double, 3> v_k_; // observation noise
+  // TODO: maybe control vector
+  double time_step; 			// time between each iteration of the filter
 
   //ROS
   ros::NodeHandle nh_;
@@ -128,6 +132,7 @@ class ArmorDetectionNode {
 
   //! control model
   GimbalContrl gimbal_control_;
+  
 };
 } //namespace roborts_detection
 

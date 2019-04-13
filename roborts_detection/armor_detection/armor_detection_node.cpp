@@ -221,6 +221,29 @@ void ArmorDetectionNode::StopThread() {
 ArmorDetectionNode::~ArmorDetectionNode() {
   StopThread();
 }
+
+void ArmorDetectionNode::InitializeFilter(double time_step, cv::Vec<double, 6> &state)
+{
+	// set the number of dynamic (state) and observation (measurements) element
+	kf_.init(6, 3);
+	
+	// set state model matrix (F)
+	cv::setIdentity(kf_.transitionMatrix);
+	kf_.transitionMatrix.at<double>(0,3) = time_step;
+	kf_.transitionMatrix.at<double>(0,4) = time_step;
+	kf_.transitionMatrix.at<double>(0,5) = time_step;
+	
+	// TODO: maybe add control matrix
+	// set observation model matix (H)
+	cv::setIdentity(kf_.measurementMatrix);
+	
+	// set process noise covariance (Q)
+	cv::setIdentity(kf_.measurementNoiseCov, cv::Scalar::all(1e-1));
+
+	// set observation noise covariance (R)
+	cv::setIdentity(kf_.processNoiseCov, cv::Scalar::all(1e-5));
+}
+
 } //namespace roborts_detection
 
 void SignalHandler(int signal){
