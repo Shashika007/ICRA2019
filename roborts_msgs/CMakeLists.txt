@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
     geometry_msgs
     actionlib
     message_generation
+    tf
     )
 
 add_action_files(
@@ -27,6 +28,8 @@ add_message_files(
     ObstacleMsg.msg
     ShootInfo.msg
     ShootState.msg
+    Telemetry.msg
+
 )
 
 add_message_files(
@@ -58,6 +61,7 @@ generate_messages(
     std_msgs
     geometry_msgs
     nav_msgs
+    tf2_msgs
 )
 
 catkin_package()
