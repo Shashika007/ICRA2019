@@ -2,13 +2,14 @@
 
 #include "executor/chassis_executor.h"
 
-#include "example_behavior/back_boot_area_behavior.h"
-#include "example_behavior/escape_behavior.h"
-#include "example_behavior/chase_behavior.h"
-#include "example_behavior/search_behavior.h"
-#include "example_behavior/patrol_behavior.h"
-#include "example_behavior/goal_behavior.h"
-
+#include "behaviors/back_boot_area_behavior.h"
+#include "behaviors/escape_behavior.h"
+#include "behaviors/chase_behavior.h"
+#include "behaviors/search_behavior.h"
+#include "behaviors/patrol_behavior.h"
+#include "behaviors/goal_behavior.h"
+#include "behaviors/supply_behavior.h"
+#include "behaviors/buff_behavior.h"
 
 #include "blackboard/blackboard.h"
 
@@ -39,6 +40,8 @@ class CompositeNode : public Node {  //  This type of Node follows the Composite
 class Selector : public CompositeNode {
 	public:
 		virtual bool run() override {
+			std::cout << "NODE: SELECTOR RUNNING" << std::endl;
+			
 			for (Node* child : getChildren()) {  // The generic Selector implementation
 				if (child->run())  // If one child succeeds, the entire operation run() succeeds.  Failure only results if all children fail.
 					return true;
@@ -50,6 +53,8 @@ class Selector : public CompositeNode {
 class Sequence : public CompositeNode {
 	public:
 		virtual bool run() override {
+			std::cout << "NODE: SEQUENCE RUNNING" << std::endl;
+
 			for (Node* child : getChildren()) {  // The generic Sequence implementation.
 				if (!child->run())  // If one child fails, then enter operation run() fails.  Success only results if all children succeed.
 					return false;
@@ -61,6 +66,8 @@ class Sequence : public CompositeNode {
 class Inverter : public CompositeNode {
 	public:
 		virtual bool run() override {
+			std::cout << "NODE: INVERTER RUNNING" << std::endl;
+
 			for (Node* child : getChildren()) {  // Inverts single child.				
 				return !child->run();
 			}
@@ -90,6 +97,7 @@ class CheckSupplyStatus : public Node {  // Each task will be a class (derived f
 	public:
 		CheckSupplyStatus (RobotStatus* status, bool inv) : status(status), boolInv(inv) {}
 		virtual bool run() override {
+			std::cout << "NODE: CHECK_SUPPLY_STATUS" << std::endl;
 			if (status->supply > status->supplyCutOff)
 				std::cout << "Supply amount is sufficient." << std::endl;  // will return true
 			else{
@@ -108,6 +116,7 @@ class CheckBuffStatus : public Node {  // Each task will be a class (derived fro
 	public:
 		CheckBuffStatus (RobotStatus* status, bool inv) : status(status), boolInv(inv)  {}
 		virtual bool run() override {
+			std::cout << "NODE: CHECK_BUFF_STATUS" << std::endl;
 			if (status->buffed)
 				std::cout << "Buff is active." << std::endl;  // will return true
 			else{
@@ -127,6 +136,8 @@ class CheckLastSeen : public Node {  // Each task will be a class (derived from 
 	public:
 		CheckLastSeen (RobotStatus* status, bool inv) : status(status), boolInv(inv) {}
 		virtual bool run() override {
+			std::cout << "NODE: CHECK_LASTSEEN_STATUS" << std::endl;
+
 			if (status->lastSeen_inRange)
 				std::cout << "Last seen enemy in range." << std::endl;  // will return true
 			else{
@@ -146,6 +157,8 @@ class CheckHealthStatus : public Node {  // Each task will be a class (derived f
 	public:
 		CheckHealthStatus (RobotStatus* status, bool inv) : status(status) , boolInv(inv) {}
 		virtual bool run() override {
+			std::cout << "NODE: CHECK_HEALTH_STATUS" << std::endl;
+
 			if (status->health > status->healthCutOff){
 				std::cout << "Health is sufficient." << std::endl;  // will return true
 				if(!boolInv)
@@ -164,7 +177,7 @@ class CheckHealthStatus : public Node {  // Each task will be a class (derived f
 
 /**************** BLACKBOARD UPDATE OF STATUS VALUES*****************/
 
-void updateStatus(RobotStatus* status){
+void updateStatus(RobotStatus* status, roborts_decision::Blackboard *blackboard){
 	
 	//VARS TO BE UPDATED BY BLACKBOARD / REFEREE SYSTEM
 	
@@ -177,10 +190,14 @@ void updateStatus(RobotStatus* status){
  
 	//EXAMPLE BELOW
 	//status-> lastSeen_inRange = blackboard_ -> enemydetected)(?????)
-	status->health = 100;
-	status->supply = 100;
+	
+	status->health = double(blackboard->getHealth());
+
+	//double((blackboard->getMaxHealth() - blackboard->getHealth())/(blackboard->getMaxHealth())) * 100;
+	std::cout << "Percent Health: " << status->health << "\t Max Health: " << blackboard->getMaxHealth() << std::endl;	
+	status->supply = status->supply - 1;
 	status->buffed = false;
-	status->lastSeen_inRange = true; 
+	status->lastSeen_inRange = false; 
 }
 
 
@@ -201,13 +218,14 @@ int main(int argc, char **argv) {
   roborts_decision::EscapeBehavior       escape_behavior(chassis_executor, blackboard, full_path);
   roborts_decision::PatrolBehavior       patrol_behavior(chassis_executor, blackboard, full_path);
   roborts_decision::GoalBehavior       	 goal_behavior(chassis_executor, blackboard);
+  roborts_decision::SupplyBehavior	 supply_behavior(chassis_executor, blackboard, full_path);
 
-	auto command_thread= std::thread(Command);
+	//auto command_thread= std::thread(Command);
 	ros::Rate rate(10);
 	
 	RobotStatus* robotStatus = new RobotStatus {100, 100, false, false, NONE};  
   
-	Sequence* root = new Sequence; // Note that root can be either a Sequence or a Selector, since it has only one child.
+	Selector* root = new Selector; // Note that root can be either a Sequence or a Selector, since it has only one child.
 	Sequence* seq1 = new Sequence;  
 	Sequence* seq2 = new Sequence;  
 	Sequence* seq3 = new Sequence;  
@@ -262,20 +280,14 @@ int main(int argc, char **argv) {
 
 	seq4->addChild(inv3);
 	inv3->addChild(checkSupplyInv);
-	
-	
-	/*
-	supplySelector->addChild (checkOpen);
-	supplySelector->addChild (sequence1);
-	
-	sequence1->addChild (approach);
-	sequence1->addChild (open);
-	*/
+
+
 	bool start = true;
+	robotStatus->command = NONE;
+
 	while(ros::ok()){
 	    ros::spinOnce();
-		robotStatus->command = NONE;
-		updateStatus(robotStatus); //NEED TO UPDATES
+		updateStatus(robotStatus, blackboard); //NEED TO UPDATE
 		if(!start){
 			while (!root->run()){  // If the operation starting from the root fails, keep trying until it succeeds.
 			
@@ -284,7 +296,7 @@ int main(int argc, char **argv) {
 				//run(robotStatus->command)
 				
 				robotStatus->command = NONE;
-				updateStatus(robotStatus); //NEED TO UPDATES
+				updateStatus(robotStatus, blackboard); //NEED TO UPDATES
 				
 				//CONTINUE
 				
@@ -308,6 +320,11 @@ int main(int argc, char **argv) {
 			std::cout << "CHASE BEHAVIOR" << std::endl;			
 			chase_behavior.Run();
 			break;
+		  case GETSUPPLY:
+			std::cout << "GET SUPPLY BEHAVIOR" << std::endl;			
+			supply_behavior.Run();
+			break;
+			
 			//search
 		  case SEARCH:
 			std::cout << "SEARCH BEHAVIOR" << std::endl;
@@ -325,16 +342,16 @@ int main(int argc, char **argv) {
 			break;
 		  case EXIT:
 			std::cout << "EXITING" << std::endl;
-			if (command_thread.joinable()){
-			  command_thread.join();
-			}
+			//if (command_thread.joinable()){
+			//  command_thread.join();
+			//}
 			return 0;
 		  default:
 			break;
 		}
 		rate.sleep();		
 		std::cout << std::endl << "Operation complete.  Behaviour tree exited." << std::endl;
-		std::cin.get();
+		//std::cin.get();
 	}
   
   

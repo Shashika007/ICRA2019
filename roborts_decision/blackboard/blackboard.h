@@ -29,6 +29,10 @@
 #include "../proto/decision.pb.h"
 #include "costmap/costmap_interface.h"
 
+/***************** NEW MSG ADDITIONS ***************/
+#include "roborts_msgs/RobotStatus.h"
+
+
 namespace roborts_decision{
 
 class Blackboard {
@@ -53,7 +57,7 @@ class Blackboard {
     // Enemy fake pose
     ros::NodeHandle rviz_nh("/move_base_simple");
     enemy_sub_ = rviz_nh.subscribe<geometry_msgs::PoseStamped>("goal", 1, &Blackboard::GoalCallback, this);
-
+	
     ros::NodeHandle nh;
 
     roborts_decision::DecisionConfig decision_config;
@@ -186,6 +190,12 @@ class Blackboard {
   const unsigned char* GetCharMap() {
     return charmap_;
   }
+  uint8_t getHealth(){
+    return fullStatus.remain_hp;
+ }
+  uint8_t getMaxHealth(){
+    return fullStatus.max_hp;
+ }
 
  private:
   void UpdateRobotPose() {
@@ -226,6 +236,11 @@ class Blackboard {
 
   //! robot map pose
   geometry_msgs::PoseStamped robot_map_pose_;
+
+
+  //subscriber for health info
+  roborts_msgs::RobotStatus fullStatus;
+
 
 };
 } //namespace roborts_decision
