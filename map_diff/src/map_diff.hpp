@@ -25,7 +25,7 @@ using std::vector;
 bool threshold(vector<cv::Point> pts);
 bool threshold(vector<cv::Point> pts)
 {
-	return pts.size() < 10;
+	return pts.size() < 20 || pts.size() > 80;
 }
 cv::Point2f findCenter(Mat &im, bool & good);
 
@@ -52,8 +52,42 @@ cv::Point2f findCenter(Mat &im, bool & good)
 	{
         good = true;
 		cv::RotatedRect box = cv::minAreaRect(contours[i]);
-		//cv::circle(colored, box.center, 3, Scalar(0, 255, 0), 3);
-        return box.center;
+
+		cv::circle(colored, box.center, 2, Scalar(0, 255, 0), 2);
+		// cv::namedWindow("Target", cv::WINDOW_NORMAL);
+		// cv::resizeWindow("Target", 800, 500);
+		// rotated rectangle
+       cv::Point2f rect_points[4]; 
+
+	   box.points( rect_points );
+	   bool notfilter = true;
+	   for( int j = 0; j < 4; j++ )
+	   {
+		double res = cv::norm(rect_points[j] - rect_points[(j+1)%4]);
+		if(res < 10 || res > 45)
+		{
+			notfilter = false;
+			break;
+		}
+	   }
+	   if(notfilter)
+	   {
+		return box.center;
+	   }
+	//    if (notfilter)
+	//    {
+	// 	for( int j = 0; j < 4; j++ )
+	//    	{
+		
+    // 		line( colored, rect_points[j], rect_points[(j+1)%4], Scalar(0,255,0), 1, 8 );
+	//    	}
+	//    }
+	   
+	    
+
+		// imshow("Target", colored);
+		// waitKey(1);
+        
 	}
     return cv::Point2f();
 	// imshow("Circle", colored);
