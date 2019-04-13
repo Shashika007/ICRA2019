@@ -222,7 +222,7 @@ ArmorDetectionNode::~ArmorDetectionNode() {
   StopThread();
 }
 
-void ArmorDetectionNode::InitializeFilter(double time_step, cv::Vec<double, 6> &state)
+void ArmorDetectionNode::InitializeFilter(double time_step, const cv::Vec<double, 6> &state)
 {
 	// set the number of dynamic (state) and observation (measurements) element
 	kf_.init(6, 3);
@@ -242,6 +242,27 @@ void ArmorDetectionNode::InitializeFilter(double time_step, cv::Vec<double, 6> &
 
 	// set observation noise covariance (R)
 	cv::setIdentity(kf_.processNoiseCov, cv::Scalar::all(1e-5));
+	
+	// Set the initial state of the model, k = 0.
+	// cv::Mat(state).copyTo(kf_statePost);
+	kf_.statePost = cv::Mat(state);
+	cv::Mat zero_state(state);
+	zero_state = zero_state.col(0);
+	zero_state.copyTo(kf_.statePost.col(0));
+
+}
+
+void ArmorDetectionNode::predict(cv::Point3f &position)
+{
+	// Run the prediction phase and get position state values.
+	//position = cv::Point3f(kf_.predict().rowRange(0,2)); 
+	kf_.predict();
+	position.x = kf_.statePre.at<double>(0,0);
+	position.y = kf_.statePre.at<double>(1,0);
+	position.z = kf_.statePre.at<double>(2,0);
+	
+	//cv::Mat p = kf_.	predict();
+	//p.copyTo(position);
 }
 
 } //namespace roborts_detection

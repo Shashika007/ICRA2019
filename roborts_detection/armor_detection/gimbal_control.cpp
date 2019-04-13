@@ -60,11 +60,11 @@ float GimbalContrl::GetPitch(float x, float y, float v) {
 
 }
 
-void GimbalContrl::Transform(cv::Point3f &postion, float &pitch, float &yaw) {
+void GimbalContrl::Transform(cv::Point3f &position, float &pitch, float &yaw) {
   pitch =
-      -GetPitch((postion.z + offset_.z) / 100, -(postion.y + offset_.y) / 100, 15) + (float)(offset_pitch_ * 3.1415926535 / 180);
+      -GetPitch((position.z + offset_.z) / 100, -(position.y + offset_.y) / 100, 15) + (float)(offset_pitch_ * 3.1415926535 / 180);
   //yaw positive direction :anticlockwise
-  yaw = -(float) (atan2(postion.x + offset_.x, postion.z + offset_.z)) + (float)(offset_yaw_ * 3.1415926535 / 180);
+  yaw = -(float) (atan2(position.x + offset_.x, position.z + offset_.z)) + (float)(offset_yaw_ * 3.1415926535 / 180);
 }
 
 } // roborts_detection
