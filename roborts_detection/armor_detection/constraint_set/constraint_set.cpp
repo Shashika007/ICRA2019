@@ -201,9 +201,6 @@ void ConstraintSet::DetectLights(const cv::Mat &src, std::vector<cv::RotatedRect
   // TODO: To be optimized
   //std::vector<int> is_processes(contours_light.size());
   for (unsigned int i = 0; i < contours_brightness.size(); ++i) {
-    for (unsigned int j = 0; j < contours_light.size(); ++j) {
-
-        if (cv::pointPolygonTest(contours_light[j], contours_brightness[i][0], false) >= 0.0) {
           cv::RotatedRect single_light = cv::minAreaRect(contours_brightness[i]);
           cv::Point2f vertices_point[4];
           single_light.points(vertices_point);
@@ -213,9 +210,6 @@ void ConstraintSet::DetectLights(const cv::Mat &src, std::vector<cv::RotatedRect
             cv_toolbox_->DrawRotatedRect(show_lights_before_filter_, single_light, cv::Scalar(0, 255, 0), 2, light_info.angle_);
           single_light.angle = light_info.angle_;
           lights.push_back(single_light);
-          break;
-        }
-    }
   }
 
   if (enable_debug_)
@@ -238,15 +232,21 @@ void ConstraintSet::FilterLights(std::vector<cv::RotatedRect> &lights) {
     auto light_aspect_ratio =
         std::max(light.size.width, light.size.height) / std::min(light.size.width, light.size.height);
     //https://stackoverflow.com/questions/15956124/minarearect-angles-unsure-about-the-angle-returned/21427814#21427814
+    /*
     if(light.size.width < light.size.height) {
-      angle = light.angle; // -light.angle
+      angle = -light.angle; // -light.angle
     } else
-      angle = light.angle; // light.angle + 90
+      angle = light.angle + 90; // light.angle + 90
+      cv_toolbox_->DrawRotatedRect(show_lights_after_filter_, light, cv::Scalar(0, 255, 0), 2, angle);
+      */
+    angle = light.angle;
     //std::cout << "light angle: " << angle << std::endl;
     //std::cout << "light_aspect_ratio: " << light_aspect_ratio << std::endl;
     //std::cout << "light_area: " << light.size.area() << std::endl;
     if (light_aspect_ratio < light_max_aspect_ratio_ &&
-        light.size.area() >= light_min_area_) { //angle < light_max_angle_ &&
+        light.size.area() >= light_min_area_ &&
+        angle > 70 &&
+        angle < 110) { //angle < light_max_angle_ &&
           rects.push_back(light);
       if (enable_debug_)
         cv_toolbox_->DrawRotatedRect(show_lights_after_filter_, light, cv::Scalar(0, 255, 0), 2, angle);
