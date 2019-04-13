@@ -222,7 +222,7 @@ ArmorDetectionNode::~ArmorDetectionNode() {
   StopThread();
 }
 
-void ArmorDetectionNode::InitializeFilter(double time_step, const cv::Vec<double, 6> &state)
+void ArmorDetectionNode::InitializeFilter(float time_step, const cv::Point3f &pos, const cv::Vec3f &vel)
 {
 	// set the number of dynamic (state) and observation (measurements) element
 	kf_.init(6, 3);
@@ -243,26 +243,56 @@ void ArmorDetectionNode::InitializeFilter(double time_step, const cv::Vec<double
 	// set observation noise covariance (R)
 	cv::setIdentity(kf_.processNoiseCov, cv::Scalar::all(1e-5));
 	
-	// Set the initial state of the model, k = 0.
-	// cv::Mat(state).copyTo(kf_statePost);
-	kf_.statePost = cv::Mat(state);
-	cv::Mat zero_state(state);
-	zero_state = zero_state.col(0);
-	zero_state.copyTo(kf_.statePost.col(0));
+	// Set position value for state vector
+	kf_.statePost.at<float>(0,0) = pos.x;
+	kf_.statePost.at<float>(1,0) = pos.y;
+	kf_.statePost.at<float>(2,0) = pos.z;
 
+	// Set velocity value for state vector
+	kf_.statePost.at<float>(3,0) = vel[0];
+	kf_.statePost.at<float>(4,0) = vel[1];
+	kf_.statePost.at<float>(5,0) = vel[3];
+	
+	//cv::Mat state_pos = kf_.statePost.rowRange(0,2);
+	//cv::Mat(pos).copyTo(state_pos);
+	//cv::Mat(pos).copyTo(kf_.statePost.rowRange(0,2));
+	//
+	//cv::Mat state_vel = kf_.statePost.rowRange(3,5);
+	//cv::Mat(vel).copyTo(state_vel);
+	//cv::Mat(vel).copyTo(kf_.statePost.rowRange(3,5));
 }
 
-void ArmorDetectionNode::predict(cv::Point3f &position)
+void ArmorDetectionNode::InitializeFilter(float time_step)
 {
-	// Run the prediction phase and get position state values.
-	//position = cv::Point3f(kf_.predict().rowRange(0,2)); 
-	kf_.predict();
-	position.x = kf_.statePre.at<double>(0,0);
-	position.y = kf_.statePre.at<double>(1,0);
-	position.z = kf_.statePre.at<double>(2,0);
+	cv::Point3f position; // initial 3D position
+	cv::Vec3f velocity; 	// initial 3D velocity
 	
-	//cv::Mat p = kf_.	predict();
-	//p.copyTo(position);
+	// Randomy initialize velocity
+	cv::randn(velocity, cv::Scalar::all(0), cv::Scalar::all(10));
+	
+	// use the current enemy's location if known
+	if(detected_enemy_)
+		position = { x_, y_, z_ };
+	else // randomly set initial position
+		cv::randn(cv::Vec3f(position), cv::Scalar::all(341), cv::Scalar::all(426));
+	
+	InitializeFilter(time_step, position, velocity);	
+}
+
+cv::Point3f ArmorDetectionNode::predict(const cv::Point3f &position)
+{
+	cv::Point3f predicted_pos;
+	
+	// Run the prediction phase and get position state values.
+	kf_.predict();
+	predicted_pos.x = kf_.statePre.at<float>(0,0);
+	predicted_pos.y = kf_.statePre.at<float>(1,0);
+	predicted_pos.z = kf_.statePre.at<float>(2,0);
+
+	// Run update phase
+	cv::Mat z_k = kf_.measurementMatrix * position + kf_.measurementCov;
+	
+	return predicted_pos;
 }
 
 } //namespace roborts_detection

@@ -86,9 +86,9 @@ class ArmorDetectionNode {
   void PublishMsgs();
   
   
-  void InitializeFilter(double time_step);
-  void InitializeFilter(double time_step, const cv::Vec<double, 6> &state);
-  void predict(cv::Point3f &position);
+	void InitializeFilter(float time_step);
+	void InitializeFilter(float time_step, const cv::Point3f &pos, const cv::Vec3f &vel);
+  cv::Point3f predict(const cv::Point3f &position);
   
  protected:
  private:
