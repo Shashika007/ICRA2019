@@ -57,9 +57,9 @@ class Blackboard {
     // Enemy fake pose
     ros::NodeHandle rviz_nh("/move_base_simple");
     enemy_sub_ = rviz_nh.subscribe<geometry_msgs::PoseStamped>("goal", 1, &Blackboard::GoalCallback, this);
-	
+    
     ros::NodeHandle nh;
-
+    robot_status_sub_ = nh.subscribe<roborts_msgs::RobotStatus>("robot_status", 10, &Blackboard::RobotStatusCallback, this);
     roborts_decision::DecisionConfig decision_config;
     roborts_common::ReadProtoFromTextFile(proto_file_path, &decision_config);
 
@@ -139,6 +139,10 @@ class Blackboard {
   void GoalCallback(const geometry_msgs::PoseStamped::ConstPtr& goal){
     new_goal_ = true;
     goal_ = *goal;
+  }
+
+  void RobotStatusCallback(const roborts_msgs::RobotStatus::ConstPtr& status){
+    fullStatus = *status;
   }
 
   geometry_msgs::PoseStamped GetGoal() const {
@@ -239,6 +243,7 @@ class Blackboard {
 
 
   //subscriber for health info
+  ros::Subscriber robot_status_sub_;
   roborts_msgs::RobotStatus fullStatus;
 
 
