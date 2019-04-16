@@ -52,7 +52,6 @@ cv::Point2f findCenter(Mat &im, bool & good)
 	{
         good = true;
 		cv::RotatedRect box = cv::minAreaRect(contours[i]);
-
 		cv::circle(colored, box.center, 2, Scalar(0, 255, 0), 2);
 		// cv::namedWindow("Target", cv::WINDOW_NORMAL);
 		// cv::resizeWindow("Target", 800, 500);

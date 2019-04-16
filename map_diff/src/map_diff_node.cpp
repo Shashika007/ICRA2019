@@ -34,7 +34,6 @@ geometry_msgs::PoseStamped calculateDiff(nav_msgs::OccupancyGrid &result, bool &
     // const float maxValue = 1.0;
     cv::Mat image(result.info.height, result.info.width, CV_8UC1, result.data.data());
     auto center = findCenter(image, good);
-
     if (good)
     {
         geometry_msgs::PoseStamped msg;
@@ -82,7 +81,6 @@ int main(int argc, char **argv)
             nav_msgs::OccupancyGrid msg;
             bool okay;
             auto goalMsg = calculateDiff(msg, okay);
-
             if (okay)
             {
                 goal.publish(goalMsg);

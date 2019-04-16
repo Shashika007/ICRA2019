@@ -3,8 +3,8 @@ first_map_only            : false
 gui_publish_rate          : 10
 
 laser_min_range           : 0.15
-laser_max_range           : 20
-laser_max_beams           : 100
+laser_max_range           : 8.0
+laser_max_beams           : 30
 
 min_particles             : 70
 max_particles             : 5000
