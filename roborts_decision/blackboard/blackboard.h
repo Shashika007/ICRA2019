@@ -59,7 +59,7 @@ class Blackboard {
     enemy_sub_ = rviz_nh.subscribe<geometry_msgs::PoseStamped>("goal", 1, &Blackboard::GoalCallback, this);
     
     ros::NodeHandle nh;
-    robot_status_sub_ = nh.subscribe<roborts_msgs::RobotStatus>("robot_status", 10, &Blackboard::RobotStatusCallback, this);
+    robot_status_sub_ = nh.subscribe<roborts_msgs::RobotStatus>("robot_status", 30, &Blackboard::RobotStatusCallback, this);
     roborts_decision::DecisionConfig decision_config;
     roborts_common::ReadProtoFromTextFile(proto_file_path, &decision_config);
 
@@ -194,11 +194,8 @@ class Blackboard {
   const unsigned char* GetCharMap() {
     return charmap_;
   }
-  uint8_t getHealth(){
+  uint16_t getHealth(){
     return fullStatus.remain_hp;
- }
-  uint8_t getMaxHealth(){
-    return fullStatus.max_hp;
  }
 
  private:

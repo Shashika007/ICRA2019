@@ -326,7 +326,7 @@ class CheckHealthStatus : public Node {  // Each task will be a class (derived f
 						status->command = CHASE;
 						if(!status->lastSeen_inRange)
 							status->command = SEARCH;						
-						break;				
+						break;					
 						case SUPPLY_HEAD:
 						status->command = GETSUPPLY;
 						break;
@@ -401,11 +401,10 @@ int updateStatus(RobotStatus* status, roborts_decision::Blackboard *blackboard){
 	//status-> lastSeen_inRange = blackboard_ -> enemydetected)(?????)
 	
 	currentTreeType = NONE_TREE; 
-	
-	status->health = uint16_t(blackboard->getHealth());
+	status->health = double(blackboard->getHealth());
 
 	//double((blackboard->getMaxHealth() - blackboard->getHealth())/(blackboard->getMaxHealth())) * 100;
-	//std::cout << "Percent Health: " << status->health << "\t Max Health: " << blackboard->getMaxHealth() << std::endl;	
+	std::cout << "Percent Health: " << status->health << "\t Max Health: " << blackboard->getMaxHealth() << std::endl;	
 	status->supply = status->supply - 1;
 	status->buffed = false;
 	status->lastSeen_inRange = false;
@@ -416,10 +415,10 @@ int updateStatus(RobotStatus* status, roborts_decision::Blackboard *blackboard){
 	else if(status->health <= status->healthCutOff){
 		currentTreeType = HEALTH_HEAD;		
 	}
-	else if(!status->buffed && status->canGetBuff){
+	else if(!status->buffed && status->can_getBuff){
 		currentTreeType = BUFF_HEAD;		
 	}	
-	else if(!status->lastSeen_inRange && status->supply <= status->supplyCutOff2){
+	else if(!status->lastSeen_inRange && status->supply <= supplyCutOff2){
 		currentTreeType = ENEMY_HEAD;		
 	}
 	else{
@@ -430,7 +429,7 @@ int updateStatus(RobotStatus* status, roborts_decision::Blackboard *blackboard){
 
 /********************************************************************/
 
-void runRoot(Selector* root, bool start, roborts_decision::Blackboard *blackboard, RobotStatus* status){
+void runRoot(Selector* root, bool start, roborts_decision::Blackboard *blackboard){
 	if(!start){
 		while (!root->run()){  // If the operation starting from the root fails, keep trying until it succeeds.
 		
@@ -438,8 +437,8 @@ void runRoot(Selector* root, bool start, roborts_decision::Blackboard *blackboar
 			//RUN DESISION TREE --updates command 
 			//run(robotStatus->command)
 			
-			status->command = NONE;
-			updateStatus(status, blackboard); //NEED TO UPDATES
+			robotStatus->command = NONE;
+			updateStatus(robotStatus, blackboard); //NEED TO UPDATES
 			
 			//CONTINUE
 			
@@ -530,12 +529,12 @@ int main(int argc, char **argv) {
 	seq3_1->addChild(checkSupply);
 	seq3_1->addChild(inv2_1);
 	inv2_1->addChild(checkEnemySeenInv);
-	seq3_1->addChild(checkHealth);
+	seq3_1->addChild(checkHealth)
 	
 	seq4_1->addChild(checkSupply);
 	seq4_1->addChild(inv4_1);
 	inv4_1->addChild(checkEnemySeenInv);
-	seq4_1->addChild(inv5_1);
+	seq4_1->addChild(inv5_1)
 	inv5_1->addChild(checkHealthInv);
 	
 	
@@ -562,7 +561,7 @@ int main(int argc, char **argv) {
 	seq2_2->addChild(inv1_2);
 	inv1_2->addChild(checkHealthInv);
 	
-	seq3_1->addChild(inv2_2);
+	seq3_1->addChild(inv2_2)
 	inv2_2->addChild(checkEnemySeenInv);
 	
 	
@@ -675,25 +674,25 @@ int main(int argc, char **argv) {
 			break;
 			case DEFAULT_HEAD:
 			std::cout << "DEFAULT_HEAD Type Tree" << std::endl;
-			runRoot(root_1, start, blackboard, robotStatus);			
+			runRoot(root_1, start, blackboard)			
 			break;
 			
 			case SUPPLY_HEAD:
 			std::cout << "SUPPLY_HEAD Type Tree" << std::endl;
-			runRoot(root_2, start, blackboard, robotStatus);
+			runRoot(root_2, start, blackboard)
 			break;
 
 			case HEALTH_HEAD:
 			std::cout << "HEALTH_HEAD Type Tree" << std::endl;
-			runRoot(root_3, start, blackboard, robotStatus);			
+			runRoot(root_3, start, blackboard)			
 			break;
 			case BUFF_HEAD:
 			std::cout << "BUFF_HEAD Type Tree" << std::endl;
-			runRoot(root_4, start, blackboard, robotStatus);			
+			runRoot(root_4, start, blackboard)			
 			break;
 			case ENEMY_HEAD:
 			std::cout << "ENEMY_HEAD Type Tree" << std::endl;
-			runRoot(root_5, start, blackboard, robotStatus);			
+			runRoot(root_5, start, blackboard)			
 			break;
 			case BONUS_HEAD:
 			std::cout << "BONUS_HEAD Type Tree" << std::endl;	
