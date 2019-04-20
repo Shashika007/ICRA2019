@@ -24,6 +24,26 @@ char command = '0';
 #include <iostream>
 #include <list>
 
+enum Commands {NONE, CHASE, ESCAPE, PATROL, GETBUFF, GETSUPPLY, SEARCH, GOAL, EXIT};
+enum TreeType {NONE, DEFAULT_HEAD, SUPPLY_HEAD, HEALTH_HEAD, BUFF_HEAD, ENEMY_HEAD, BONUS_HEAD};
+
+TreeType currentTreeType = NONE;
+
+struct RobotStatus {
+	double supply; 			//Percent Supply Left
+	double health; 			//Percent Health Left
+	bool buffed;   			//Buff status
+	bool canGetBuff = false;		//Buff area active to take
+	bool lastSeen_inRange;	//Enemy in range.
+	
+	Commands command;
+	
+	
+	double supplyCutOff = 20;
+	double supplyCutOff2 = 40;
+	double healthCutOff = 40;
+};
+
 class Node {  // This class represents each node in the behaviour tree.
 	public:
 		virtual bool run() = 0;
@@ -75,20 +95,7 @@ class Inverter : public CompositeNode {
 		}	
 };
 
-enum Commands {NONE, CHASE, ESCAPE, PATROL, GETBUFF, GETSUPPLY, SEARCH, GOAL, EXIT};;
 
-struct RobotStatus {
-	double supply; 			//Percent Supply Left
-	double health; 			//Percent Health Left
-	bool buffed;   			//Buff status
-	bool lastSeen_inRange;	//Enemy in range.
-	
-	Commands command;
-	
-	
-	double supplyCutOff = 20; 
-	double healthCutOff = 40;
-};
 
 class CheckSupplyStatus : public Node {  // Each task will be a class (derived from Node of course).
 	private:
@@ -98,12 +105,60 @@ class CheckSupplyStatus : public Node {  // Each task will be a class (derived f
 		CheckSupplyStatus (RobotStatus* status, bool inv) : status(status), boolInv(inv) {}
 		virtual bool run() override {
 			std::cout << "NODE: CHECK_SUPPLY_STATUS" << std::endl;
-			if (status->supply > status->supplyCutOff)
+			if (status->supply > status->supplyCutOff){
 				std::cout << "Supply amount is sufficient." << std::endl;  // will return true
+				switch(currentTreeType){
+					case NONE:
+					status->command = NONE;
+					break;
+					case DEFAULT_HEAD:			
+					status->command = NONE;
+					break;					
+					case SUPPLY_HEAD:
+					status->command = NONE;
+					break;
+					case HEALTH_HEAD:
+					status->command = NONE;					
+					break;
+					case BUFF_HEAD:
+					status->command = GETBUFF;
+					break;
+					case ENEMY_HEAD:			
+					status->command = SEARCH;
+					break;
+					case BONUS_HEAD:
+					status->command = NONE;
+					break;					
+				}				
+			}
 			else{
 				std::cout << "Supply amount is insufficient." << std::endl;  // will return false
-				if(boolInv)
-					status->command = GETSUPPLY;				
+				if(boolInv){
+					//status->command = GETSUPPLY;	
+					switch(currentTreeType){
+						case NONE:
+						status->command = NONE;
+						break;
+						case DEFAULT_HEAD:			
+						status->command = NONE;
+						break;					
+						case SUPPLY_HEAD:
+						status->command = NONE;
+						break;
+						case HEALTH_HEAD:
+						status->command = NONE;					
+						break;
+						case BUFF_HEAD:
+						status->command = NONE;
+						break;
+						case ENEMY_HEAD:			
+						status->command = GETSUPPLY;
+						break;
+						case BONUS_HEAD:
+						status->command = NONE;
+						break;					
+					}					
+				}
 			}
 			return (status->supply > status->supplyCutOff);
 		}
@@ -117,12 +172,60 @@ class CheckBuffStatus : public Node {  // Each task will be a class (derived fro
 		CheckBuffStatus (RobotStatus* status, bool inv) : status(status), boolInv(inv)  {}
 		virtual bool run() override {
 			std::cout << "NODE: CHECK_BUFF_STATUS" << std::endl;
-			if (status->buffed)
+			if (status->buffed){
 				std::cout << "Buff is active." << std::endl;  // will return true
+				switch(currentTreeType){
+					case NONE:
+					status->command = NONE;
+					break;
+					case DEFAULT_HEAD:			
+					status->command = NONE;
+					break;					
+					case SUPPLY_HEAD:
+					status->command = NONE;
+					break;
+					case HEALTH_HEAD:
+					status->command = NONE;					
+					break;
+					case BUFF_HEAD:
+					status->command = NONE;
+					break;
+					case ENEMY_HEAD:			
+					status->command = NONE;
+					break;
+					case BONUS_HEAD:
+					status->command = NONE;
+					break;					
+				}					
+			}
 			else{
 				std::cout << "Buff is inactive." << std::endl;  // will return false
-				if(boolInv)
-					status->command = GETBUFF;
+				if(boolInv){
+					//status->command = GETBUFF;
+					switch(currentTreeType){
+						case NONE:
+						status->command = NONE;
+						break;
+						case DEFAULT_HEAD:			
+						status->command = NONE;
+						break;					
+						case SUPPLY_HEAD:
+						status->command = NONE;
+						break;
+						case HEALTH_HEAD:
+						status->command = NONE;					
+						break;
+						case BUFF_HEAD:
+						status->command = NONE;
+						break;
+						case ENEMY_HEAD:			
+						status->command = NONE;
+						break;
+						case BONUS_HEAD:
+						status->command = NONE;
+						break;					
+					}										
+				}
 			}
 			
 			return (status->buffed);
@@ -138,12 +241,64 @@ class CheckLastSeen : public Node {  // Each task will be a class (derived from 
 		virtual bool run() override {
 			std::cout << "NODE: CHECK_LASTSEEN_STATUS" << std::endl;
 
-			if (status->lastSeen_inRange)
+			if (status->lastSeen_inRange){
 				std::cout << "Last seen enemy in range." << std::endl;  // will return true
+				switch(currentTreeType){
+					case NONE:
+					status->command = NONE;
+					break;
+					case DEFAULT_HEAD:			
+					status->command = NONE;
+					break;					
+					case SUPPLY_HEAD:
+					status->command = NONE;
+					break;
+					case HEALTH_HEAD:
+					status->command = ESCAPE;					
+					break;
+					case BUFF_HEAD:
+					status->command = GETBUFF;
+					if(status->health <= status->healthCutOff)
+						status->command = ESCAPE;
+					break;
+					case ENEMY_HEAD:			
+					status->command = NONE;
+					break;
+					case BONUS_HEAD:
+					status->command = NONE;
+					break;					
+				}					
+			}
 			else{
 				std::cout << "Last seen enemy out of range." << std::endl;  // will return false
-				if(boolInv)
-					status->command = PATROL;
+				if(boolInv){
+					//status->command = PATROL;
+					switch(currentTreeType){
+						case NONE:
+						status->command = NONE;
+						break;
+						case DEFAULT_HEAD:			
+						status->command = NONE;
+						break;					
+						case SUPPLY_HEAD:
+						status->command = GETSUPPLY;
+						break;
+						case HEALTH_HEAD:
+						status->command = PATROL;					
+						break;
+						case BUFF_HEAD:
+						status->command = GETSUPPLY;
+						if(status->health <= status->healthCutOff)
+							status->command = PATROL;						
+						break;
+						case ENEMY_HEAD:			
+						status->command = NONE;
+						break;
+						case BONUS_HEAD:
+						status->command = NONE;
+						break;					
+					}					
+				}
 			}
 			
 			return (status->lastSeen_inRange);
@@ -161,23 +316,77 @@ class CheckHealthStatus : public Node {  // Each task will be a class (derived f
 
 			if (status->health > status->healthCutOff){
 				std::cout << "Health is sufficient." << std::endl;  // will return true
-				if(!boolInv)
-					status->command = CHASE;
+				if(!boolInv){
+					//status->command = CHASE;
+					switch(currentTreeType){
+						case NONE:
+						status->command = NONE;
+						break;
+						case DEFAULT_HEAD:			
+						status->command = CHASE;
+						if(!status->lastSeen_inRange)
+							status->command = SEARCH;						
+						break;					
+						case SUPPLY_HEAD:
+						status->command = GETSUPPLY;
+						break;
+						case HEALTH_HEAD:
+						status->command = NONE;					
+						break;
+						case BUFF_HEAD:
+						status->command = NONE;
+						break;
+						case ENEMY_HEAD:			
+						status->command = GETSUPPLY;
+						break;
+						case BONUS_HEAD:
+						status->command = NONE;
+						break;					
+					}					
+				}
 			}
 			else{
 				std::cout << "Health is insufficient." << std::endl;  // will return false
-				if(boolInv)
-					status->command = ESCAPE;				
+				if(boolInv){
+					//status->command = ESCAPE;				
+					switch(currentTreeType){
+						case NONE:
+						status->command = NONE;
+						break;
+						case DEFAULT_HEAD:			
+						status->command = ESCAPE;
+						if(!status->lastSeen_inRange)
+							status->command = PATROL;
+						break;					
+						case SUPPLY_HEAD:
+						status->command = ESCAPE;
+						break;
+						case HEALTH_HEAD:
+						status->command = NONE;					
+						break;
+						case BUFF_HEAD:
+						status->command = NONE;
+						break;
+						case ENEMY_HEAD:			
+						status->command = GETSUPPLY;
+						break;
+						case BONUS_HEAD:
+						status->command = NONE;
+						break;					
+					}					
+				}
 			}
 			return (status->health > status->healthCutOff);
 		}
 };
 
 
-
+ 
 /**************** BLACKBOARD UPDATE OF STATUS VALUES*****************/
 
-void updateStatus(RobotStatus* status, roborts_decision::Blackboard *blackboard){
+
+
+int updateStatus(RobotStatus* status, roborts_decision::Blackboard *blackboard){
 	
 	//VARS TO BE UPDATED BY BLACKBOARD / REFEREE SYSTEM
 	
@@ -191,19 +400,52 @@ void updateStatus(RobotStatus* status, roborts_decision::Blackboard *blackboard)
 	//EXAMPLE BELOW
 	//status-> lastSeen_inRange = blackboard_ -> enemydetected)(?????)
 	
+	currentTreeType = NONE; 
 	status->health = double(blackboard->getHealth());
 
 	//double((blackboard->getMaxHealth() - blackboard->getHealth())/(blackboard->getMaxHealth())) * 100;
 	std::cout << "Percent Health: " << status->health << "\t Max Health: " << blackboard->getMaxHealth() << std::endl;	
 	status->supply = status->supply - 1;
 	status->buffed = false;
-	status->lastSeen_inRange = false; 
+	status->lastSeen_inRange = false;
+	
+	if(status->supply <= status->supplyCutOff){
+		currentTreeType = SUPPLY_HEAD;		
+	}
+	else if(status->health <= status->healthCutOff){
+		currentTreeType = HEALTH_HEAD;		
+	}
+	else if(!status->buffed && status->can_getBuff){
+		currentTreeType = BUFF_HEAD;		
+	}	
+	else if(!status->lastSeen_inRange && status->supply <= supplyCutOff2){
+		currentTreeType = ENEMY_HEAD;		
+	}
+	else{
+		currentTreeType = DEFAULT_HEAD;		
+	}
 }
 
 
 /********************************************************************/
 
-
+void runRoot(Selector* root, bool start, roborts_decision::Blackboard *blackboard){
+	if(!start){
+		while (!root->run()){  // If the operation starting from the root fails, keep trying until it succeeds.
+		
+			//UPDATE ROBOTSTATUS THROUGH BLACKBOARD
+			//RUN DESISION TREE --updates command 
+			//run(robotStatus->command)
+			
+			robotStatus->command = NONE;
+			updateStatus(robotStatus, blackboard); //NEED TO UPDATES
+			
+			//CONTINUE
+			
+			std::cout << "--------------------" << std::endl;
+		}
+	}	
+}
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "behavior_test_node");
@@ -224,28 +466,7 @@ int main(int argc, char **argv) {
 	ros::Rate rate(10);
 	
 	RobotStatus* robotStatus = new RobotStatus {100, 100, false, false, NONE};  
-  
-	Selector* root = new Selector; // Note that root can be either a Sequence or a Selector, since it has only one child.
-	Sequence* seq1 = new Sequence;  
-	Sequence* seq2 = new Sequence;  
-	Sequence* seq3 = new Sequence;  
-	Sequence* seq4 = new Sequence;  
-	
-	Selector* primarySelector = new Selector; 
-	
-/*	
-	Selector* supplySelector = new Selector;  
-	Selector* buffSelector = new Selector; 
-	Selector* inRangeSelector = new Selector;
-	Selector* healthSelector = new Selector;
-*/	
-	Inverter* inv1 = new Inverter;
-	Inverter* inv2 = new Inverter;
-	Inverter* inv3 = new Inverter;
-	Inverter* inv4 = new Inverter;
-	
-	
-		
+
 	CheckSupplyStatus* checkSupply = new CheckSupplyStatus (robotStatus, false);
 	CheckSupplyStatus* checkSupplyInv = new CheckSupplyStatus (robotStatus, true);
 
@@ -257,9 +478,9 @@ int main(int argc, char **argv) {
 
 	CheckHealthStatus* checkHealth = new CheckHealthStatus (robotStatus, false);
 	CheckHealthStatus* checkHealthInv = new CheckHealthStatus (robotStatus, true);
-	
-	
-	
+
+	// Original Tree
+	/*	
 	root->addChild (seq1);
 	root->addChild (seq2);
 	root->addChild (seq3);
@@ -280,6 +501,168 @@ int main(int argc, char **argv) {
 
 	seq4->addChild(inv3);
 	inv3->addChild(checkSupplyInv);
+	*/
+	
+	// Tree Type: DEFAULT
+	Selector* root_1 = new Selector; // Note that root can be either a Sequence or a Selector, since it has only one child.
+	Sequence* seq1_1 = new Sequence;  
+	Sequence* seq2_1 = new Sequence;  
+	Sequence* seq3_1 = new Sequence;  
+	Sequence* seq4_1 = new Sequence;  
+	
+	Inverter* inv1_1 = new Inverter;
+	Inverter* inv2_1 = new Inverter;
+	Inverter* inv3_1 = new Inverter;
+	Inverter* inv4_1 = new Inverter;
+	Inverter* inv5_1 = new Inverter;
+	
+	root_1->addChild (seq1_1);
+	root_1->addChild (seq2_1);
+	root_1->addChild (seq3_1);
+	root_1->addChild (seq4_1);
+
+	seq1_1->addChild(checkSupply);
+	seq1_1->addChild(checkEnemySeen);
+	seq1_1->addChild(checkHealth);
+
+	seq2_1->addChild(checkSupply);
+	seq2_1->addChild(checkEnemySeen);
+	seq2_1->addChild(inv1_1);
+	inv1_1->addChild(checkHealthInv);
+
+	seq3_1->addChild(checkSupply);
+	seq3_1->addChild(inv2_1);
+	inv2_1->addChild(checkEnemySeenInv);
+	seq3_1->addChild(checkHealth)
+	
+	seq4_1->addChild(checkSupply);
+	seq4_1->addChild(inv4_1);
+	inv4_1->addChild(checkEnemySeenInv);
+	seq4_1->addChild(inv5_1)
+	inv5_1->addChild(checkHealthInv);
+	
+	
+	// Tree Type: SUPPLY_HEAD
+	Selector* root_2 = new Selector; // Note that root can be either a Sequence or a Selector, since it has only one child.
+	Sequence* seq1_2 = new Sequence;  
+	Sequence* seq2_2 = new Sequence;  
+	Sequence* seq3_2 = new Sequence;  
+	Sequence* seq4_2 = new Sequence;  
+	
+	Inverter* inv1_2 = new Inverter;
+	Inverter* inv2_2 = new Inverter;
+	Inverter* inv3_2 = new Inverter;
+	Inverter* inv4_2 = new Inverter;
+
+	root_2->addChild (seq1_2);
+	root_2->addChild (seq2_2);
+	root_2->addChild (seq3_2);
+
+	seq1_2->addChild(checkEnemySeen);
+	seq1_2->addChild(checkHealth);
+	
+	seq2_2->addChild(checkEnemySeen);
+	seq2_2->addChild(inv1_2);
+	inv1_2->addChild(checkHealthInv);
+	
+	seq3_1->addChild(inv2_2)
+	inv2_2->addChild(checkEnemySeenInv);
+	
+	
+	// Tree Type: HEALTH_HEAD
+	Selector* root_3 = new Selector; // Note that root can be either a Sequence or a Selector, since it has only one child.
+	Sequence* seq1_3 = new Sequence;  
+	Sequence* seq2_3 = new Sequence;  
+	
+	Inverter* inv1_3 = new Inverter;
+
+
+	root_3->addChild (seq1_3);
+	root_3->addChild (seq2_3);
+
+	seq1_3->addChild(checkEnemySeen);
+	
+	seq2_3->addChild(inv1_3);
+	inv1_3->addChild(checkEnemySeenInv);
+
+	// Tree Type: BUFF_HEAD
+	Selector* root_4 = new Selector; // Note that root can be either a Sequence or a Selector, since it has only one child.
+	Sequence* seq1_4 = new Sequence;  
+	Sequence* seq2_4 = new Sequence;  
+	Sequence* seq3_4 = new Sequence;  
+	Sequence* seq4_4 = new Sequence;  
+	Sequence* seq5_4 = new Sequence;  
+	
+	Inverter* inv1_4 = new Inverter;
+	Inverter* inv2_4 = new Inverter;
+	Inverter* inv3_4 = new Inverter;
+	Inverter* inv4_4 = new Inverter;
+	Inverter* inv5_4 = new Inverter;
+	Inverter* inv6_4 = new Inverter;
+	
+	root_4->addChild (seq1_4);
+	root_4->addChild (seq2_4);
+	root_4->addChild (seq3_4);
+	root_4->addChild (seq4_4);
+
+	seq1_4->addChild(checkHealth);
+	seq1_4->addChild(checkSupply);
+	
+	seq2_4->addChild(checkHealth);
+	seq2_4->addChild(inv1_4);
+	inv1_4->addChild(checkSupplyInv);
+	seq2_4->addChild(checkEnemySeen);
+
+	seq3_4->addChild(checkHealth);
+	seq3_4->addChild(inv2_4);
+	inv2_4->addChild(checkSupplyInv);
+	seq3_4->addChild(inv3_4);
+	inv3_4->addChild(checkEnemySeenInv);
+	
+	seq4_4->addChild(inv4_4);
+	inv4_4->addChild(checkHealthInv);
+	seq4_4->addChild(checkEnemySeen);
+
+	seq5_4->addChild(inv5_4);
+	inv5_4->addChild(checkHealthInv);
+	seq5_4->addChild(checkEnemySeen);
+	seq5_4->addChild(inv6_4);
+	inv6_4->addChild(checkEnemySeenInv);
+
+	
+	// Tree Type: ENEMY_HEAD
+	Selector* root_5 = new Selector; // Note that root can be either a Sequence or a Selector, since it has only one child.
+	Sequence* seq1_5 = new Sequence;  
+	Sequence* seq2_5 = new Sequence;  
+	Sequence* seq3_5 = new Sequence;  
+	Sequence* seq4_5 = new Sequence;  
+	
+	Inverter* inv1_5 = new Inverter;
+	Inverter* inv2_5 = new Inverter;
+	Inverter* inv3_5 = new Inverter;
+	Inverter* inv4_5 = new Inverter;
+	
+	root_5->addChild (seq1_5);
+	root_5->addChild (seq2_5);
+	root_5->addChild (seq3_5);
+	root_5->addChild (seq4_5);
+
+	seq1_5->addChild(checkHealth);
+	seq1_5->addChild(checkSupply);
+	
+	seq2_5->addChild(checkHealth);
+	seq2_5->addChild(inv1_5);
+	inv1_5->addChild(checkSupplyInv);
+
+	seq3_5->addChild(inv2_5);
+	inv2_5->addChild(checkHealthInv);
+	seq3_5->addChild(checkSupply);
+	
+	seq4_5->addChild(inv3_5);
+	inv3_5->addChild(checkHealthInv);
+	seq4_5->addChild(inv4_5);
+	inv4_5->addChild(checkSupplyInv);
+
 
 
 	bool start = true;
@@ -288,21 +671,38 @@ int main(int argc, char **argv) {
 	while(ros::ok()){
 	    ros::spinOnce();
 		updateStatus(robotStatus, blackboard); //NEED TO UPDATE
-		if(!start){
-			while (!root->run()){  // If the operation starting from the root fails, keep trying until it succeeds.
+		
+		switch(currentTreeType){
+			case NONE:
+			std::cout << "NONE Type Tree" << std::endl;
+			break;
+			case DEFAULT_HEAD:
+			std::cout << "DEFAULT_HEAD Type Tree" << std::endl;
+			runRoot(root_1, start, blackboard)			
+			break;
 			
-				//UPDATE ROBOTSTATUS THROUGH BLACKBOARD
-				//RUN DESISION TREE --updates command 
-				//run(robotStatus->command)
-				
-				robotStatus->command = NONE;
-				updateStatus(robotStatus, blackboard); //NEED TO UPDATES
-				
-				//CONTINUE
-				
-				std::cout << "--------------------" << std::endl;
-			}
+			case SUPPLY_HEAD:
+			std::cout << "SUPPLY_HEAD Type Tree" << std::endl;
+			runRoot(root_2, start, blackboard)
+			break;
+
+			case HEALTH_HEAD:
+			std::cout << "HEALTH_HEAD Type Tree" << std::endl;
+			runRoot(root_3, start, blackboard)			
+			break;
+			case BUFF_HEAD:
+			std::cout << "BUFF_HEAD Type Tree" << std::endl;
+			runRoot(root_4, start, blackboard)			
+			break;
+			case ENEMY_HEAD:
+			std::cout << "ENEMY_HEAD Type Tree" << std::endl;
+			runRoot(root_5, start, blackboard)			
+			break;
+			case BONUS_HEAD:
+			std::cout << "BONUS_HEAD Type Tree" << std::endl;	
+			break;					
 		}
+		
 		start = false;
 		switch (robotStatus->command) {
 		  //back to boot area
