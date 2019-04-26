@@ -10,6 +10,7 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
+#include <laser_geometry/laser_geometry.h>
 
 using cv::cvtColor;
 using cv::imread;
