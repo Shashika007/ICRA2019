@@ -15,8 +15,6 @@
 
 
 
-void Command();
-char command = '0';
 
 
 /****** NEW SEQUENCE TYPE DECISION TREE *******/
@@ -25,24 +23,37 @@ char command = '0';
 #include <list>
 
 enum Commands {NONE, CHASE, ESCAPE, PATROL, GETBUFF, GETSUPPLY, SEARCH, GOAL, EXIT};
-enum TreeType {NONE, DEFAULT_HEAD, SUPPLY_HEAD, HEALTH_HEAD, BUFF_HEAD, ENEMY_HEAD, BONUS_HEAD};
+enum TreeType {NONE_TREE, DEFAULT_HEAD, SUPPLY_HEAD, HEALTH_HEAD, BUFF_HEAD, ENEMY_HEAD, BONUS_HEAD};
 
-TreeType currentTreeType = NONE;
+TreeType currentTreeType = NONE_TREE;
 
 struct RobotStatus {
-	double supply; 			//Percent Supply Left
-	double health; 			//Percent Health Left
-	bool buffed;   			//Buff status
+	double supply = 100; 			//Percent Supply Left
+	double health = 100; 			//Percent Health Left
+	bool buffed = false;   			//Buff status
 	bool canGetBuff = false;		//Buff area active to take
-	bool lastSeen_inRange;	//Enemy in range.
+	bool lastSeen_inRange = false;		//Enemy in range.
 	
-	Commands command;
+	Commands command = NONE;
 	
 	
 	double supplyCutOff = 20;
 	double supplyCutOff2 = 40;
 	double healthCutOff = 40;
 };
+
+
+void Command();
+void updateValuesCommand(RobotStatus *status);
+char command = '0';
+
+
+
+
+
+
+
+
 
 class Node {  // This class represents each node in the behaviour tree.
 	public:
@@ -60,7 +71,7 @@ class CompositeNode : public Node {  //  This type of Node follows the Composite
 class Selector : public CompositeNode {
 	public:
 		virtual bool run() override {
-			std::cout << "NODE: SELECTOR RUNNING" << std::endl;
+			std::cout << "\tMAIN: SELECTOR RUNNING" << std::endl;
 			
 			for (Node* child : getChildren()) {  // The generic Selector implementation
 				if (child->run())  // If one child succeeds, the entire operation run() succeeds.  Failure only results if all children fail.
@@ -73,7 +84,7 @@ class Selector : public CompositeNode {
 class Sequence : public CompositeNode {
 	public:
 		virtual bool run() override {
-			std::cout << "NODE: SEQUENCE RUNNING" << std::endl;
+			std::cout << "\tMAIN NODE: SEQUENCE RUNNING" << std::endl;
 
 			for (Node* child : getChildren()) {  // The generic Sequence implementation.
 				if (!child->run())  // If one child fails, then enter operation run() fails.  Success only results if all children succeed.
@@ -86,7 +97,7 @@ class Sequence : public CompositeNode {
 class Inverter : public CompositeNode {
 	public:
 		virtual bool run() override {
-			std::cout << "NODE: INVERTER RUNNING" << std::endl;
+			std::cout << "\tMAIN NODE: INVERTER RUNNING" << std::endl;
 
 			for (Node* child : getChildren()) {  // Inverts single child.				
 				return !child->run();
@@ -104,11 +115,11 @@ class CheckSupplyStatus : public Node {  // Each task will be a class (derived f
 	public:
 		CheckSupplyStatus (RobotStatus* status, bool inv) : status(status), boolInv(inv) {}
 		virtual bool run() override {
-			std::cout << "NODE: CHECK_SUPPLY_STATUS" << std::endl;
+			std::cout << "\tNODE: CHECK_SUPPLY_STATUS" << std::endl;
 			if (status->supply > status->supplyCutOff){
-				std::cout << "Supply amount is sufficient." << std::endl;  // will return true
+				std::cout << "\t\tSupply amount is sufficient." << std::endl;  // will return true
 				switch(currentTreeType){
-					case NONE:
+					case NONE_TREE:
 					status->command = NONE;
 					break;
 					case DEFAULT_HEAD:			
@@ -132,11 +143,11 @@ class CheckSupplyStatus : public Node {  // Each task will be a class (derived f
 				}				
 			}
 			else{
-				std::cout << "Supply amount is insufficient." << std::endl;  // will return false
-				if(boolInv){
+				std::cout << "\t\tSupply amount is insufficient." << std::endl;  // will return false
+				//if(boolInv){
 					//status->command = GETSUPPLY;	
 					switch(currentTreeType){
-						case NONE:
+						case NONE_TREE:
 						status->command = NONE;
 						break;
 						case DEFAULT_HEAD:			
@@ -158,7 +169,7 @@ class CheckSupplyStatus : public Node {  // Each task will be a class (derived f
 						status->command = NONE;
 						break;					
 					}					
-				}
+				//}
 			}
 			return (status->supply > status->supplyCutOff);
 		}
@@ -171,11 +182,11 @@ class CheckBuffStatus : public Node {  // Each task will be a class (derived fro
 	public:
 		CheckBuffStatus (RobotStatus* status, bool inv) : status(status), boolInv(inv)  {}
 		virtual bool run() override {
-			std::cout << "NODE: CHECK_BUFF_STATUS" << std::endl;
+			std::cout << "\tNODE: CHECK_BUFF_STATUS" << std::endl;
 			if (status->buffed){
-				std::cout << "Buff is active." << std::endl;  // will return true
+				std::cout << "\t\tBuff is active." << std::endl;  // will return true
 				switch(currentTreeType){
-					case NONE:
+					case NONE_TREE:
 					status->command = NONE;
 					break;
 					case DEFAULT_HEAD:			
@@ -199,11 +210,11 @@ class CheckBuffStatus : public Node {  // Each task will be a class (derived fro
 				}					
 			}
 			else{
-				std::cout << "Buff is inactive." << std::endl;  // will return false
-				if(boolInv){
+				std::cout << "\t\tBuff is inactive." << std::endl;  // will return false
+				//if(boolInv){
 					//status->command = GETBUFF;
 					switch(currentTreeType){
-						case NONE:
+						case NONE_TREE:
 						status->command = NONE;
 						break;
 						case DEFAULT_HEAD:			
@@ -225,7 +236,7 @@ class CheckBuffStatus : public Node {  // Each task will be a class (derived fro
 						status->command = NONE;
 						break;					
 					}										
-				}
+				//}
 			}
 			
 			return (status->buffed);
@@ -239,12 +250,12 @@ class CheckLastSeen : public Node {  // Each task will be a class (derived from 
 	public:
 		CheckLastSeen (RobotStatus* status, bool inv) : status(status), boolInv(inv) {}
 		virtual bool run() override {
-			std::cout << "NODE: CHECK_LASTSEEN_STATUS" << std::endl;
+			std::cout << "\tNODE: CHECK_LASTSEEN_STATUS" << std::endl;
 
 			if (status->lastSeen_inRange){
-				std::cout << "Last seen enemy in range." << std::endl;  // will return true
+				std::cout << "\t\tLast seen enemy in range." << std::endl;  // will return true
 				switch(currentTreeType){
-					case NONE:
+					case NONE_TREE:
 					status->command = NONE;
 					break;
 					case DEFAULT_HEAD:			
@@ -270,11 +281,11 @@ class CheckLastSeen : public Node {  // Each task will be a class (derived from 
 				}					
 			}
 			else{
-				std::cout << "Last seen enemy out of range." << std::endl;  // will return false
-				if(boolInv){
+				std::cout << "\t\tLast seen enemy out of range." << std::endl;  // will return false
+				//if(boolInv){
 					//status->command = PATROL;
-					switch(currentTreeType){
-						case NONE:
+					switch(currentTreeType){						
+						case NONE_TREE:
 						status->command = NONE;
 						break;
 						case DEFAULT_HEAD:			
@@ -298,7 +309,7 @@ class CheckLastSeen : public Node {  // Each task will be a class (derived from 
 						status->command = NONE;
 						break;					
 					}					
-				}
+				//}
 			}
 			
 			return (status->lastSeen_inRange);
@@ -312,21 +323,21 @@ class CheckHealthStatus : public Node {  // Each task will be a class (derived f
 	public:
 		CheckHealthStatus (RobotStatus* status, bool inv) : status(status) , boolInv(inv) {}
 		virtual bool run() override {
-			std::cout << "NODE: CHECK_HEALTH_STATUS" << std::endl;
+			std::cout << "\tNODE: CHECK_HEALTH_STATUS" << std::endl;
 
 			if (status->health > status->healthCutOff){
-				std::cout << "Health is sufficient." << std::endl;  // will return true
-				if(!boolInv){
+				std::cout << "\t\tHealth is sufficient." << std::endl;  // will return true
+				//if(!boolInv){
 					//status->command = CHASE;
 					switch(currentTreeType){
-						case NONE:
+						case NONE_TREE:
 						status->command = NONE;
 						break;
 						case DEFAULT_HEAD:			
 						status->command = CHASE;
 						if(!status->lastSeen_inRange)
 							status->command = SEARCH;						
-						break;					
+						break;				
 						case SUPPLY_HEAD:
 						status->command = GETSUPPLY;
 						break;
@@ -343,14 +354,14 @@ class CheckHealthStatus : public Node {  // Each task will be a class (derived f
 						status->command = NONE;
 						break;					
 					}					
-				}
+				//}
 			}
 			else{
-				std::cout << "Health is insufficient." << std::endl;  // will return false
-				if(boolInv){
+				std::cout << "\tHealth is insufficient." << std::endl;  // will return false
+				//if(boolInv){
 					//status->command = ESCAPE;				
 					switch(currentTreeType){
-						case NONE:
+						case NONE_TREE:
 						status->command = NONE;
 						break;
 						case DEFAULT_HEAD:			
@@ -374,7 +385,7 @@ class CheckHealthStatus : public Node {  // Each task will be a class (derived f
 						status->command = NONE;
 						break;					
 					}					
-				}
+				//}
 			}
 			return (status->health > status->healthCutOff);
 		}
@@ -400,14 +411,17 @@ int updateStatus(RobotStatus* status, roborts_decision::Blackboard *blackboard){
 	//EXAMPLE BELOW
 	//status-> lastSeen_inRange = blackboard_ -> enemydetected)(?????)
 	
-	currentTreeType = NONE; 
-	status->health = double(blackboard->getHealth());
+	currentTreeType = NONE_TREE; 
+	
+	status->health = status->health; //uint16_t(blackboard->getHealth());
 
 	//double((blackboard->getMaxHealth() - blackboard->getHealth())/(blackboard->getMaxHealth())) * 100;
-	std::cout << "Percent Health: " << status->health << "\t Max Health: " << blackboard->getMaxHealth() << std::endl;	
-	status->supply = status->supply - 1;
-	status->buffed = false;
-	status->lastSeen_inRange = false;
+	//std::cout << "Percent Health: " << status->health << "\t Max Health: " << blackboard->getMaxHealth() << std::endl;	
+
+
+	status->supply = status->supply;
+	status->buffed = status->buffed ;
+	status->lastSeen_inRange = status->lastSeen_inRange;
 	
 	if(status->supply <= status->supplyCutOff){
 		currentTreeType = SUPPLY_HEAD;		
@@ -415,21 +429,31 @@ int updateStatus(RobotStatus* status, roborts_decision::Blackboard *blackboard){
 	else if(status->health <= status->healthCutOff){
 		currentTreeType = HEALTH_HEAD;		
 	}
-	else if(!status->buffed && status->can_getBuff){
+	else if(!status->buffed && status->canGetBuff){
 		currentTreeType = BUFF_HEAD;		
 	}	
-	else if(!status->lastSeen_inRange && status->supply <= supplyCutOff2){
+	else if(!status->lastSeen_inRange && status->supply <= status->supplyCutOff2){
 		currentTreeType = ENEMY_HEAD;		
 	}
 	else{
 		currentTreeType = DEFAULT_HEAD;		
 	}
+
+	std::cout << std::endl;
+	std::cout << "-------- Updated Values ------ " << std::endl
+		  << "Supply: " << status->supply << "\t"
+		  << "Health: " << status->health << "\t"
+		  << "Buffed: " << status->buffed << "\t"
+		  << "Can Get Buff: " << status->canGetBuff << "\t"
+		  << "Enemy In Range: "	<< status->lastSeen_inRange << "\t"
+		  << std::endl;
+	std::cout << "------------------------------ " << std::endl;
 }
 
 
 /********************************************************************/
 
-void runRoot(Selector* root, bool start, roborts_decision::Blackboard *blackboard){
+void runRoot(Selector* root, bool start, roborts_decision::Blackboard *blackboard, RobotStatus* status){
 	if(!start){
 		while (!root->run()){  // If the operation starting from the root fails, keep trying until it succeeds.
 		
@@ -437,8 +461,8 @@ void runRoot(Selector* root, bool start, roborts_decision::Blackboard *blackboar
 			//RUN DESISION TREE --updates command 
 			//run(robotStatus->command)
 			
-			robotStatus->command = NONE;
-			updateStatus(robotStatus, blackboard); //NEED TO UPDATES
+			status->command = PATROL;
+			updateStatus(status, blackboard); //NEED TO UPDATES
 			
 			//CONTINUE
 			
@@ -479,31 +503,46 @@ int main(int argc, char **argv) {
 	CheckHealthStatus* checkHealth = new CheckHealthStatus (robotStatus, false);
 	CheckHealthStatus* checkHealthInv = new CheckHealthStatus (robotStatus, true);
 
+
+
+/****** FOR TESTING PURPOSES****/
+	std::cout << "Testing Settup Yes(1)  / No(0): ";
+	std::cin >> command;
+
+	bool testing = false;
+	bool singleTest = false;
+
+	if(command == '1'){
+		testing = true;
+		command = '9';
+		std::cout << "Single Set Test Yes(1)  / No(0): ";
+		std::cin >> command;
+		if(command == '1')
+			singleTest = true;
+	}
+
+
 	// Original Tree
 	/*	
 	root->addChild (seq1);
 	root->addChild (seq2);
 	root->addChild (seq3);
 	root->addChild (seq4);
-
 	seq1->addChild(checkSupply);
 	seq1->addChild(checkEnemySeen);
 	seq1->addChild(checkHealth);
-
 	seq2->addChild(checkSupply);
 	seq2->addChild(checkEnemySeen);
 	seq2->addChild(inv1);
 	inv1->addChild(checkHealthInv);
-
 	seq3->addChild(checkSupply);
 	seq3->addChild(inv2);
 	inv2->addChild(checkEnemySeenInv);
-
 	seq4->addChild(inv3);
 	inv3->addChild(checkSupplyInv);
 	*/
 	
-	// Tree Type: DEFAULT
+	// Tree Type: DEFAULT_HEAD
 	Selector* root_1 = new Selector; // Note that root can be either a Sequence or a Selector, since it has only one child.
 	Sequence* seq1_1 = new Sequence;  
 	Sequence* seq2_1 = new Sequence;  
@@ -514,7 +553,6 @@ int main(int argc, char **argv) {
 	Inverter* inv2_1 = new Inverter;
 	Inverter* inv3_1 = new Inverter;
 	Inverter* inv4_1 = new Inverter;
-	Inverter* inv5_1 = new Inverter;
 	
 	root_1->addChild (seq1_1);
 	root_1->addChild (seq2_1);
@@ -533,21 +571,20 @@ int main(int argc, char **argv) {
 	seq3_1->addChild(checkSupply);
 	seq3_1->addChild(inv2_1);
 	inv2_1->addChild(checkEnemySeenInv);
-	seq3_1->addChild(checkHealth)
+	seq3_1->addChild(checkHealth);
 	
 	seq4_1->addChild(checkSupply);
+	seq4_1->addChild(inv3_1);
+	inv3_1->addChild(checkEnemySeenInv);
 	seq4_1->addChild(inv4_1);
-	inv4_1->addChild(checkEnemySeenInv);
-	seq4_1->addChild(inv5_1)
-	inv5_1->addChild(checkHealthInv);
+	inv4_1->addChild(checkHealthInv);
 	
-	
+	 
 	// Tree Type: SUPPLY_HEAD
 	Selector* root_2 = new Selector; // Note that root can be either a Sequence or a Selector, since it has only one child.
 	Sequence* seq1_2 = new Sequence;  
 	Sequence* seq2_2 = new Sequence;  
 	Sequence* seq3_2 = new Sequence;  
-	Sequence* seq4_2 = new Sequence;  
 	
 	Inverter* inv1_2 = new Inverter;
 	Inverter* inv2_2 = new Inverter;
@@ -565,7 +602,7 @@ int main(int argc, char **argv) {
 	seq2_2->addChild(inv1_2);
 	inv1_2->addChild(checkHealthInv);
 	
-	seq3_1->addChild(inv2_2)
+	seq3_2->addChild(inv2_2);
 	inv2_2->addChild(checkEnemySeenInv);
 	
 	
@@ -665,83 +702,89 @@ int main(int argc, char **argv) {
 
 
 
-	bool start = true;
+	bool start = false;
 	robotStatus->command = NONE;
 
 	while(ros::ok()){
 	    ros::spinOnce();
+		if(testing){
+			updateValuesCommand(robotStatus);
+			if(singleTest)
+				testing = false;
+		}
+
 		updateStatus(robotStatus, blackboard); //NEED TO UPDATE
-		
+
 		switch(currentTreeType){
-			case NONE:
+			case NONE_TREE:
 			std::cout << "NONE Type Tree" << std::endl;
 			break;
 			case DEFAULT_HEAD:
-			std::cout << "DEFAULT_HEAD Type Tree" << std::endl;
-			runRoot(root_1, start, blackboard)			
+			std::cout << "****DEFAULT_HEAD Type Tree" << std::endl;
+			runRoot(root_1, start, blackboard, robotStatus);			
 			break;
 			
 			case SUPPLY_HEAD:
-			std::cout << "SUPPLY_HEAD Type Tree" << std::endl;
-			runRoot(root_2, start, blackboard)
+			std::cout << "****SUPPLY_HEAD Type Tree" << std::endl;
+			runRoot(root_2, start, blackboard, robotStatus);
 			break;
 
 			case HEALTH_HEAD:
-			std::cout << "HEALTH_HEAD Type Tree" << std::endl;
-			runRoot(root_3, start, blackboard)			
+			std::cout << "****HEALTH_HEAD Type Tree" << std::endl;
+			runRoot(root_3, start, blackboard, robotStatus);			
 			break;
 			case BUFF_HEAD:
-			std::cout << "BUFF_HEAD Type Tree" << std::endl;
-			runRoot(root_4, start, blackboard)			
+			std::cout << "****BUFF_HEAD Type Tree" << std::endl;
+			runRoot(root_4, start, blackboard, robotStatus);			
 			break;
 			case ENEMY_HEAD:
-			std::cout << "ENEMY_HEAD Type Tree" << std::endl;
-			runRoot(root_5, start, blackboard)			
+			std::cout << "****ENEMY_HEAD Type Tree" << std::endl;
+			runRoot(root_5, start, blackboard, robotStatus);			
 			break;
 			case BONUS_HEAD:
-			std::cout << "BONUS_HEAD Type Tree" << std::endl;	
+			std::cout << "****BONUS_HEAD Type Tree" << std::endl;	
 			break;					
 		}
 		
-		start = false;
+		
 		switch (robotStatus->command) {
 		  //back to boot area
 		  case NONE:
-			std::cout << "BOOT BEHAVIOR" << std::endl;
+			std::cout << "--BOOT BEHAVIOR" << std::endl;
 			back_boot_area_behavior.Run();
 			break;
 			//patrol
 		  case PATROL:
-			std::cout << "PATROL BEHAVIOR" << std::endl;
+			std::cout << "--PATROL BEHAVIOR" << std::endl;
 			patrol_behavior.Run();	
 			break;
 			//chase.
 		  case CHASE:
-			std::cout << "CHASE BEHAVIOR" << std::endl;			
+			std::cout << "--CHASE BEHAVIOR" << std::endl;			
 			chase_behavior.Run();
 			break;
 		  case GETSUPPLY:
-			std::cout << "GET SUPPLY BEHAVIOR" << std::endl;			
+			std::cout << "--GET SUPPLY BEHAVIOR" << std::endl;			
 			supply_behavior.Run();
 			break;
 			
 			//search
 		  case SEARCH:
-			std::cout << "SEARCH BEHAVIOR" << std::endl;
+			std::cout << "--SEARCH BEHAVIOR" << std::endl;
 			search_behavior.Run();
 			break;
 			//escape.
 		  case ESCAPE:
-			std::cout << "ESCAPE BEHAVIOR" << std::endl;
+			std::cout << "--ESCAPE BEHAVIOR" << std::endl;
 			escape_behavior.Run();
 			break;
 			//goal.
 		  case GOAL:
-			std::cout << "GOAL BEHAVIOR" << std::endl;
+			std::cout << "--GOAL BEHAVIOR" << std::endl;
 			goal_behavior.Run();
 			break;
 		  case EXIT:
-			std::cout << "EXITING" << std::endl;
+			std::cout << "--EXITING" << std::endl;
 			//if (command_thread.joinable()){
 			//  command_thread.join();
 			//}
@@ -786,6 +829,109 @@ void Command() {
   }
 }
 
+void updateValuesCommand(RobotStatus * status){
+	
+
+    bool done = false;
+
+    while(!done){
+    std::cout << "**************************************************************************************" << std::endl;
+    std::cout << "*********************************please send a command********************************" << std::endl;
+    std::cout << "1: Supply Value" << std::endl
+              << "2: Buff" << std::endl
+              << "3: Enemy Near" << std::endl
+              << "4: Health Value" << std::endl
+              << "5: Can get BUff" << std::endl
+              << "6: None" << std::endl;
+    std::cout << "**************************************************************************************" << std::endl;
+    std::cout << "> ";
+    std::cin >> command;
+
+	if(command == '1'){
+		std::cout << "Set Supply Percent to: ";
+		std::cin >> status->supply;
+		done = true;
+	}
+	else if(command == '2'){
+		std::cout << "Set Buff ON (1) / Off (0): ";		
+		std::cin >> command;
+		
+		done = true;
+		if(command == '1')		
+			status->buffed = true;
+		else if(command == '0')		
+			status->buffed = false;
+		else
+			done = false;
+	}
+	else if(command == '3'){
+		std::cout << "Set Enemy Near True (1) / False (0): ";
+		std::cin >> command;
+		done = true;
+		if(command == '1')		
+			status->lastSeen_inRange = true;
+		else if(command == '0')		
+			status->lastSeen_inRange = false;
+		else
+			done = false;
+	}
+	else if(command == '4'){
+		std::cout << "Set Health Percent to: ";
+		std::cin >> status->health;
+		done = true;
+	}
+	else if(command == '5'){
+		std::cout << "Can get Buff True (1) / False (0): ";
+		std::cin >> command;
+		done = true;
+		if(command == '1')		
+			status->canGetBuff = true;
+		else if(command == '0')		
+			status->canGetBuff = false;
+		else
+			done = false;
+
+	}
+	else if(command == '6'){
+		done = true;
+	}
+	/*
+        if(done){
+		std::cout << std::endl;
+		std::cout << "-------- Updated Values ------ " << std::endl
+			  << "Supply: " << status->supply << "\t"
+			  << "Health: " << status->health << "\t"
+			  << "Buffed: " << status->buffed << "\t"
+			  << "Can Get Buff: " << status->canGetBuff << "\t"
+			  << "Enemy In Range: "	<< status->lastSeen_inRange << "\t"
+			  << std::endl;
+		std::cout << "------------------------------ " << std::endl;
+	}
+	*/
+	if(!done){
+		std::cout << "INVALID INPUT TRY AGAIN ";
+	}
+
+	command = '9';
+    }
+}
+
+/*
+struct RobotStatus {
+	double supply = 100; 			//Percent Supply Left
+	double health = 100; 			//Percent Health Left
+	bool buffed = false;   			//Buff status
+	bool canGetBuff = false;		//Buff area active to take
+	bool lastSeen_inRange = false;	//Enemy in range.
+	
+	Commands command = NONE;
+	
+	
+	double supplyCutOff = 20;
+	double supplyCutOff2 = 40;
+	double healthCutOff = 40;
+};
+*/
 //PREVIOUS VERSION OF TEST... CAN REVERT
 
 /*
