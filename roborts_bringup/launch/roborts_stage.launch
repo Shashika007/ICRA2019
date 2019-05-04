@@ -32,4 +32,16 @@
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find roborts_bringup)/rviz/roborts.rviz" />
 
 
+  <arg name="ID" default="A" />
+
+ <node name="mqtt_bridge" pkg="mqtt_bridge" type="mqtt_bridge_node.py" output="screen">
+    <rosparam command="load" file="$(find roborts_comm)/config/robo$(arg ID)config.yaml" />
+  </node>
+
+  <param name="id" value="$(arg ID)"/>
+
+  <node name="roborts_comm" pkg="roborts_comm" type="comm_node"/>
+
+
+
 </launch>
