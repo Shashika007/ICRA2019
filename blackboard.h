@@ -83,7 +83,13 @@ class Blackboard {
                                                  actionlib::SimpleActionClient<roborts_msgs::ArmorDetectionAction>::SimpleActiveCallback(),
                                                  boost::bind(&Blackboard::ArmorDetectionFeedbackCallback, this, _1));
     }
-
+    robot_status_sub_ = nh.subscribe<roborts_msgs::RobotStatus>("robot_status", 30, &Blackboard::RobotStatusCallback, this);
+    game_status_sub_ = nh.subscribe<roborts_msgs::GameStatus>("game_status",30, &Blackboard::GameStateCallback,this);
+    game_result_sub_ = nh.subscribe<robortes_msg::GameResult>("game_result"),30, &Blackboard::GameResultCallback,this);
+    robot_bonus_sub_ = nh.subscribe<roborts_msg::RobotBonus>("robot_bonus", 30, &Blackboard::RobotBonusCallback, this);
+    supplier_status_sub_ = nh.subscribe<roborts_msg::SupplierStatus>("field_supplier_status",30 &Blackboard::SupplierStatusCallback,this);
+    bonus_status_sub_ = nh.subscribe<roborts_msg::BonusStatus>("field_bonus_status",30,&Blackboard::BonusStatusCallback, this);
+    ros::ServiceClinet shootClinet = nh.serviceClinet<roborts_msg::ShootCmd>("cmd_shoot");
 
   }
 
