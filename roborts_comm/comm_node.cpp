@@ -6,6 +6,7 @@
 #include "roborts_msgs/ShootInfo.h"
 
 #include "tf2_msgs/TFMessage.h"
+#include "geometry_msgs/PoseStamped.h"
 
 #include <sstream>
 
@@ -17,8 +18,7 @@ class Communication{
 		Communication(){
 		 telemMsg.remain_hp=0;
 		 telemMsg.mode="";
-		 telemMsg.enemy_loc0=tf2_msgs::TFMessage();
-		 telemMsg.enemy_loc1=tf2_msgs::TFMessage();
+		 telemMsg.enemy_loc=geometry_msgs::PoseStamped();
 		 telemMsg.remain_bullet=0;
 		 telemMsg.self_loc=tf2_msgs::TFMessage();
 		}
@@ -31,13 +31,10 @@ class Communication{
 			telemMsg.mode=modeMsg.data;
 		}
 
-		void e0Callback(const tf2_msgs::TFMessage::ConstPtr& locMsg){
-			telemMsg.enemy_loc0=*locMsg;
+		void enemyCallback(const geometry_msgs::PoseStamped::ConstPtr& locMsg){
+			telemMsg.enemy_loc=*locMsg;
 		}
 
-		void e1Callback(const tf2_msgs::TFMessage::ConstPtr& locMsg){
-			telemMsg.enemy_loc1=*locMsg;
-		}
 
 		void ammoCallback(const roborts_msgs::ShootInfo::ConstPtr& locMsg){
 			telemMsg.remain_bullet=locMsg->remain_bullet;
@@ -71,33 +68,23 @@ int main(int argc, char *argv[])
 
 	ros::Publisher bridge_pub = n.advertise<roborts_msgs::Telemetry>("/comm/robo"+id, 100);
 
-
 	Communication Comms;
 
-	ros::Subscriber hpSub = n.subscribe("/RobotStatus", 100, &Communication::hpCallback, &Comms);
-	ros::Subscriber modeSub = n.subscribe("/mode", 100, &Communication::modeCallback, &Comms);
-	ros::Subscriber enemy0Sub = n.subscribe("/enemy0", 100, &Communication::e0Callback, &Comms);
-	ros::Subscriber enemy1Sub = n.subscribe("/enemy1", 100, &Communication::e1Callback, &Comms);//not sure the actual topic names
-	ros::Subscriber ammoSub = n.subscribe("/ShootInfo", 100, &Communication::ammoCallback, &Comms);	
-	ros::Subscriber selfSub = n.subscribe("/tf", 100, &Communication::locCallback, &Comms);
+	ros::Subscriber hpSub 		= n.subscribe("/RobotStatus", 100, &Communication::hpCallback	, &Comms);
+	ros::Subscriber modeSub 	= n.subscribe("/mode"		, 100, &Communication::modeCallback	, &Comms);
+	ros::Subscriber enemySub 	= n.subscribe("/enemy_pose"	, 100, &Communication::enemyCallback, &Comms);
+	ros::Subscriber ammoSub 	= n.subscribe("/ShootInfo"	, 100, &Communication::ammoCallback	, &Comms);	
+	ros::Subscriber selfSub 	= n.subscribe("/tf"			, 100, &Communication::locCallback	, &Comms);
 
 	ros::Rate loop_rate(10);
-
 
 	
 	int count = 0;	// A count of how many messages we have sent, used to create a unique string for each message.
 	while (ros::ok())
 	{
+		std::string info= std::to_string(count) +" "+ id +" "+ Comms.getMsg().mode +" hp: "+ std::to_string(Comms.getMsg().remain_hp) +" ammo: "+ std::to_string(Comms.getMsg().remain_bullet);
 
-		ROS_INFO("%s", ((std::string)("Remaining hp: "+std::to_string(Comms.getMsg().remain_hp))).c_str());
-		ROS_INFO("%s", ((std::string)("mode: "+Comms.getMsg().mode)).c_str());
-		ROS_INFO("%s", ((std::string)("Remaining ammo: "+std::to_string(Comms.getMsg().remain_bullet))).c_str());
-		ROS_INFO("%s", ((std::string)("msg count: "+std::to_string(count))).c_str());
-		ROS_INFO("%s", ((std::string)("ID: "+id)).c_str());
-
-		 //"Enemy0: "+std::to_string(Comms.getMsg().enemy_loc0);
-		 //"Enemy1: "+std::to_string(Comms.getMsg().enemy_loc1);
-		 //"Self location: "+std::to_string(Comms.getMsg().self_loc);
+		ROS_INFO("%s", info.c_str());
 	
 		Comms.publish(bridge_pub);
 
