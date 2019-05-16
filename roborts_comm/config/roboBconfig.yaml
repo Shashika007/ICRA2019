@@ -5,18 +5,19 @@ mqtt:
   client:
     protocol: 4      # MQTTv311
   connection:
-    host: roboA
+    host: roboB
     port: 1883
     keepalive: 60
-  #private_path: /
 serializer: msgpack:dumps
 deserializer: msgpack:loads
 bridge:
   - factory: mqtt_bridge.bridge:RosToMqttBridge   
-    msg_type: std_msgs.msg:String  #roborts_msgs.msg:Telemetry              #new  message type
+    msg_type: roborts_msgs.msg:Telemetry              
     topic_from: /comm/roboB
     topic_to: roboB
   - factory: mqtt_bridge.bridge:MqttToRosBridge
-    msg_type: std_msgs.msg:String #roborts_msgs.msg:Telemetry              #new message type
+    msg_type: roborts_msgs.msg:Telemetry
     topic_from: roboA
     topic_to: /comm/roboA
+
+  
