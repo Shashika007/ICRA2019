@@ -52,8 +52,8 @@ class Communication{
 		 }
 
 
-		void publish(const ros::Publisher& roboB_pub){
-			roboB_pub.publish(telemMsg);
+		void publish(const ros::Publisher& robo_pub){
+			robo_pub.publish(telemMsg);
 		}
 };
 
@@ -77,8 +77,8 @@ int main(int argc, char *argv[])
 	ros::Subscriber hpSub = n.subscribe("/RobotStatus", 100, &Communication::hpCallback, &Comms);
 	ros::Subscriber modeSub = n.subscribe("/mode", 100, &Communication::modeCallback, &Comms);
 	ros::Subscriber enemy0Sub = n.subscribe("/enemy0", 100, &Communication::e0Callback, &Comms);
-	ros::Subscriber enemy1Sub = n.subscribe("/enemy1", 100, &Communication::e1Callback, &Comms);
-	ros::Subscriber ammoSub = n.subscribe("/ShootInfo", 100, &Communication::ammoCallback, &Comms);	//not sure the actual topic names
+	ros::Subscriber enemy1Sub = n.subscribe("/enemy1", 100, &Communication::e1Callback, &Comms);//not sure the actual topic names
+	ros::Subscriber ammoSub = n.subscribe("/ShootInfo", 100, &Communication::ammoCallback, &Comms);	
 	ros::Subscriber selfSub = n.subscribe("/tf", 100, &Communication::locCallback, &Comms);
 
 	ros::Rate loop_rate(10);
