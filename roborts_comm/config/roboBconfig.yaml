@@ -5,7 +5,7 @@ mqtt:
   client:
     protocol: 4      # MQTTv311
   connection:
-    host: roboB
+    host: roboA
     port: 1883
     keepalive: 60
 serializer: msgpack:dumps
