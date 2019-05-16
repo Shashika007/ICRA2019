@@ -29,3 +29,5 @@ target_link_libraries(comm_node
 include_directories(
   include ${catkin_INCLUDE_DIRS}
 )
+
+add_dependencies(comm_node  roborts_msgs_generate_messages)
