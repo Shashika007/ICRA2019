@@ -7,8 +7,8 @@
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
@@ -28,10 +28,20 @@
 #include "io/io.h"
 #include "../proto/decision.pb.h"
 #include "costmap/costmap_interface.h"
-
-/***************** NEW MSG ADDITIONS ***************/
+#include "roborts_msgs/BonusStatus.h"
+#include "roborts_msgs/GameResult.h"
+#include "roborts_msgs/GameStatus.h"
+#include "roborts_msgs/GameSurvivor.h"
+#include "roborts_msgs/ProjectileSupply.h"
+#include "roborts_msgs/RobotBonus.h"
+#include "roborts_msgs/RobotDamage.h"
+#include "roborts_msgs/RobotHeat.h"
+#include "roborts_msgs/RobotShoot.h"
 #include "roborts_msgs/RobotStatus.h"
-
+#include "roborts_msgs/SupplierStatus.h"
+#include "roborts_msgs/ShootCmd.h"
+#include "roborts_msgs/FricWhl.h"
+#include "roborts_msgs/RobotHeat.h"
 
 namespace roborts_decision{
 
@@ -57,7 +67,7 @@ class Blackboard {
     // Enemy fake pose
     ros::NodeHandle rviz_nh("/move_base_simple");
     enemy_sub_ = rviz_nh.subscribe<geometry_msgs::PoseStamped>("goal", 1, &Blackboard::GoalCallback, this);
-	
+
     ros::NodeHandle nh;
 
     roborts_decision::DecisionConfig decision_config;
@@ -75,8 +85,16 @@ class Blackboard {
                                                  actionlib::SimpleActionClient<roborts_msgs::ArmorDetectionAction>::SimpleActiveCallback(),
                                                  boost::bind(&Blackboard::ArmorDetectionFeedbackCallback, this, _1));
     }
+    robot_status_sub_ = nh.subscribe<roborts_msgs::RobotStatus>("robot_status", 30, &Blackboard::RobotStatusCallback, this);
+    game_status_sub_ = nh.subscribe<roborts_msgs::GameStatus>("game_status",30, &Blackboard::GameStatusCallback,this);
+    game_result_sub_ = nh.subscribe<roborts_msgs::GameResult>("game_result",30, &Blackboard::GameResultCallback,this);
+    robot_bonus_sub_ = nh.subscribe<roborts_msgs::RobotBonus>("robot_bonus", 30, &Blackboard::RobotBonusCallback, this);
+    supplier_status_sub_ = nh.subscribe<roborts_msgs::SupplierStatus>("field_supplier_status",30, &Blackboard::SupplierStatusCallback,this);
+    bonus_status_sub_ = nh.subscribe<roborts_msgs::BonusStatus>("field_bonus_status",30,&Blackboard::BonusStatusCallback, this);
+    projectileSupply_pub_ = nh.advertise<roborts_msgs::ProjectileSupply>("projectile_supply",1);
 
-
+    shootClient = nh.serviceClient<roborts_msgs::ShootCmd>("cmd_shoot");
+    fricWleClient = nh.serviceClient<roborts_msgs::FricWhl>("cmd_fric_wheel");
   }
 
   ~Blackboard() = default;
@@ -125,7 +143,6 @@ class Blackboard {
     }
 
   }
-
   geometry_msgs::PoseStamped GetEnemy() const {
     return enemy_pose_;
   }
@@ -134,7 +151,28 @@ class Blackboard {
     ROS_INFO("%s: %d", __FUNCTION__, (int)enemy_detected_);
     return enemy_detected_;
   }
+  void RobotStatusCallback(const roborts_msgs::RobotStatus::ConstPtr& status){
+    fullStatus_ = *status;
+  }
+  void  GameStatusCallback(const roborts_msgs::GameStatus::ConstPtr& status){
+    gameStatus_ = *status;
+  }
 
+  void GameResultCallback(const roborts_msgs::GameResult::ConstPtr& result){
+    gameResult_ = *result;
+  }
+
+  void RobotBonusCallback(const roborts_msgs::RobotBonus::ConstPtr& bonus){
+    robotBonus_ = *bonus;
+  }
+
+  void SupplierStatusCallback(const roborts_msgs::SupplierStatus::ConstPtr& status){
+    supplierStatus_ = *status;
+  }
+
+  void BonusStatusCallback(const roborts_msgs::BonusStatus::ConstPtr& bonus_zone_status){
+    bonusStatus_ = *bonus_zone_status;
+  }
   // Goal
   void GoalCallback(const geometry_msgs::PoseStamped::ConstPtr& goal){
     new_goal_ = true;
@@ -144,7 +182,33 @@ class Blackboard {
   geometry_msgs::PoseStamped GetGoal() const {
     return goal_;
   }
-
+  void shoot(bool shoot){
+    roborts_msgs::ShootCmd shootsrv;
+    if (shoot == true){
+       shootsrv.request.mode = 2;// continuous
+       shootsrv.request.number = 1;
+       shootClient.call(shootsrv);
+    }
+    else{
+        shootsrv.request.mode = 0;// stop
+        shootsrv.request.number = 0;
+        shootClient.call(shootsrv);
+    }
+  }
+  void startFricWhl(bool fric){
+     roborts_msgs::FricWhl fricsrv;
+     if (fric == true){
+     fricsrv.request.open = true;
+     }
+     else {
+     fricsrv.request.open = false;
+     }  
+  }
+  void summonAmmo(int number){
+     p.number = number;
+     projectileSupply_pub_.publish(p);
+  }
+     
   bool IsNewGoal(){
     if(new_goal_){
       new_goal_ =  false;
@@ -190,12 +254,35 @@ class Blackboard {
   const unsigned char* GetCharMap() {
     return charmap_;
   }
-  uint8_t getHealth(){
-    return fullStatus.remain_hp;
- }
-  uint8_t getMaxHealth(){
-    return fullStatus.max_hp;
- }
+  uint16_t getHealth(){
+    return fullStatus_.remain_hp;
+  }
+  uint8_t getGameStatus(){
+    return gameStatus_.game_status;
+  }
+
+  uint16_t getRemainingTime(){
+    return gameStatus_.remaining_time;
+  }
+
+  uint8_t getGameResult(){
+    return gameResult_.result;
+  }
+  bool getRobotBonus(){
+    return robotBonus_.bonus;
+  }
+
+  uint8_t getBlueFieldBonusStatus(){
+    return bonusStatus_.blue_bonus;
+  }
+
+  uint8_t getRedFieldBonusStatus(){
+    return bonusStatus_.red_bonus;
+  }
+
+  uint8_t getSupplierStatus(){
+    return supplierStatus_.status;
+  }
 
  private:
   void UpdateRobotPose() {
@@ -237,11 +324,32 @@ class Blackboard {
   //! robot map pose
   geometry_msgs::PoseStamped robot_map_pose_;
 
+   ros::Subscriber robot_status_sub_;
+  // robot status
+  roborts_msgs::RobotStatus fullStatus_;
 
-  //subscriber for health info
-  roborts_msgs::RobotStatus fullStatus;
+
+  ros::Subscriber game_status_sub_;
+  roborts_msgs::GameStatus gameStatus_;
 
 
+  ros::Subscriber game_result_sub_;
+  roborts_msgs::GameResult gameResult_;
+
+  ros::Subscriber bonus_status_sub_;
+  roborts_msgs::BonusStatus bonusStatus_;
+
+  ros::Subscriber supplier_status_sub_;
+  roborts_msgs::SupplierStatus supplierStatus_;
+
+  ros::Subscriber robot_bonus_sub_;
+  roborts_msgs::RobotBonus robotBonus_;
+
+  ros::ServiceClient shootClient;
+  ros::ServiceClient fricWleClient;
+  
+  ros::Publisher projectileSupply_pub_;
+  roborts_msgs::ProjectileSupply p;
 };
 } //namespace roborts_decision
 #endif //ROBORTS_DECISION_BLACKBOARD_H
