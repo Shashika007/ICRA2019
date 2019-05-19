@@ -5,11 +5,9 @@
 
 #include "std_msgs/String.h"
 #include "geometry_msgs/PoseStamped.h"
-#include <sstream>
-
 
 const int SPIN_RATE=1;
-
+const int COUNT_MAX=100;
 
 
 enum spinMode_t {DISABLED, SPININPLACE, DANCE};
@@ -20,17 +18,16 @@ class Spin{
 		geometry_msgs::Twist base_rate;
 		geometry_msgs::Twist prev_spin_cmd;
 
-		int angle;
+		int angular;
+		int count;
 		int direction;
+		int msgCount;
 
 	public:
 
 
-		Spin() : mode(DISABLED),angle(0),direction(1){}
+		Spin() : mode(DISABLED),angular(0),direction(1),msgCount(0),count(0){}
 		
-		void processVel(const geometry_msgs::Twist::ConstPtr& cmdMsg){
-			base_rate=*cmdMsg;
-		}
 
 		spinMode_t getMode(){return mode;}
 
@@ -52,6 +49,7 @@ class Spin{
 			spin.linear=linear;
 
 			spin_pub.publish(spin);
+			msgCount++;
 		}
 
 
@@ -72,6 +70,32 @@ class Spin{
 			}
 
 		}
+
+
+		void processVel(const geometry_msgs::Twist::ConstPtr &velMsg){
+			msgCount--;
+			if(msgCount<0)
+				base_rate=*velMsg;
+
+		}
+
+		void dance(  ros::Publisher &dance_pub){
+			count++;
+			if (count>COUNT_MAX){
+				direction*=-1;
+				count=0;
+			}
+			angular=SPIN_RATE*direction;
+
+			geometry_msgs::Twist shout;
+			geometry_msgs::Vector3 angularV;
+			angularV.z=angular;
+			shout.angular=angularV;
+
+			dance_pub.publish (shout);
+
+		}
+
 };
 
 
@@ -102,6 +126,7 @@ int main(int argc, char *argv[])
 			Spinny.spinInPlace(vel_Pub);
 			break;
 			case DANCE:
+			Spinny.dance(vel_Pub);
 			break;
 			default:
 			break;
