@@ -1,0 +1,22 @@
+<package>
+    <name>spin</name>
+    <version>1.0.0</version>
+    <description> This package allows the robot to avoid enemy projectiles by spinning  </description>
+    <author>Matthew Foran</author>
+    <maintainer email="mjforan@vt.edu">Matthew Foran</maintainer>
+    <license>GPL 3.0 </license>
+    <url>https://github.com/robogrinder/ICRA2019</url>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <build_depend>roscpp</build_depend>
+    <build_depend>tf2_msgs</build_depend>
+    <build_depend>std_msgs</build_depend>
+    <build_depend>nav_msgs</build_depend>
+    
+    <run_depend>roscpp</run_depend>
+    <run_depend>tf2_msgs</run_depend>
+    <run_depend>std_msgs</run_depend>
+    <run_depend>nav_msgs</run_depend>
+
+    <export></export>   
+</package>

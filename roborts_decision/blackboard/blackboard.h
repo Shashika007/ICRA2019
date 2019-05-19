@@ -28,18 +28,6 @@
 #include "io/io.h"
 #include "../proto/decision.pb.h"
 #include "costmap/costmap_interface.h"
-#include "roborts_msgs/BonusStatus.h"
-#include "roborts_msgs/GameResult.h"
-#include "roborts_msgs/GameStatus.h"
-#include "roborts_msgs/GameSurvivor.h"
-#include "roborts_msgs/ProjectileSupply.h"
-#include "roborts_msgs/RobotBonus.h"
-#include "roborts_msgs/RobotDamage.h"
-#include "roborts_msgs/RobotHeat.h"
-#include "roborts_msgs/RobotShoot.h"
-#include "roborts_msgs/RobotStatus.h"
-#include "roborts_msgs/SupplierStatus.h"
-
 
 namespace roborts_decision{
 
@@ -133,6 +121,7 @@ class Blackboard {
     }
 
   }
+
   geometry_msgs::PoseStamped GetEnemy() const {
     return enemy_pose_;
   }
@@ -141,28 +130,7 @@ class Blackboard {
     ROS_INFO("%s: %d", __FUNCTION__, (int)enemy_detected_);
     return enemy_detected_;
   }
-  void RobotStatusCallback(const roborts_msgs::RobotStatus::ConstPtr& status){
-    fullStatus_ = *status;
-  }
-  void  GameStatusCallback(const roborts_msgs::GameStatus::ConstPtr& status){
-    gameStatus_ = *status;
-  }
 
-  void GameResultCallback(const roborts_msgs::GameResult::ConstPtr& result){
-    gameResult_ = *result;
-  }
-
-  void RobotBonusCallback(const roborts_msgs::RobotBonus::ConstPtr& bonus){
-    robotBonus_ = *bonus;
-  }
-
-  void SupplierStatusCallback(const roborts_msgs::SupplierStatus::ConstPtr& status){
-    supplierStatus_ = *status;
-  }
-
-  void BonusStatusCallback(const roborts_msgs::BonusStatus::ConstPtr& bonus_zone_status){
-    bonusStatus_ = *bonus_zone_status;
-  }
   // Goal
   void GoalCallback(const geometry_msgs::PoseStamped::ConstPtr& goal){
     new_goal_ = true;
@@ -218,35 +186,6 @@ class Blackboard {
   const unsigned char* GetCharMap() {
     return charmap_;
   }
-  uint16_t getHealth(){
-    return fullStatus_.remain_hp;
-  }
-  uint8_t getGameStatus(){
-    return gameStatus_.game_status;
-  }
-
-  uint16_t getRemainingTime(){
-    return gameStatus_.remaining_time;
-  }
-
-  uint8_t getGameResult(){
-    return gameResult_.result;
-  }
-  bool getRobotBonus(){
-    return robotBonus_.bonus;
-  }
-
-  uint8_t getBlueFieldBonusStatus(){
-    return bonusStatus_.blue_bonus;
-  }
-
-  uint8_t getRedFieldBonusStatus(){
-    return bonusStatus_.red_bonus;
-  }
-
-  uint8_t getSupplierStatus(){
-    return supplierStatus_.status;
-  }
 
  private:
   void UpdateRobotPose() {
@@ -288,27 +227,6 @@ class Blackboard {
   //! robot map pose
   geometry_msgs::PoseStamped robot_map_pose_;
 
-   ros::Subscriber robot_status_sub_;
-  // robot status
-  roborts_msgs::RobotStatus fullStatus_;
-
-
-  ros::Subscriber game_status_sub_;
-  roborts_msgs::GameStatus gameStatus_;
-
-
-  ros::Subscriber game_result_sub_;
-  roborts_msgs::GameResult gameResult_;
-
-  ros::Subscriber bonus_status_sub_;
-  roborts_msgs::BonusStatus bonusStatus_;
-
-  ros::Subscriber supplier_status_sub_;
-  roborts_msgs::SupplierStatus supplierStatus_;
-
-  ros::Subscriber robot_bonus_sub_;
-  roborts_msgs::RobotBonus robotBonus_;
-  
 };
 } //namespace roborts_decision
 #endif //ROBORTS_DECISION_BLACKBOARD_H

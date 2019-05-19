@@ -37,13 +37,11 @@ catkin_package()
 add_executable(behavior_test_node
   ${DecisionProtoHds}
   ${DecisionProtoSrc}
-  behaviors/escape_behavior.h
-  behaviors/back_boot_area_behavior.h
-  behaviors/chase_behavior.h
-  behaviors/patrol_behavior.h
-  behaviors/search_behavior.h
-  behaviors/supply_behavior.h
-  behaviors/buff_behavior.h
+  example_behavior/escape_behavior.h
+  example_behavior/back_boot_area_behavior.h
+  example_behavior/chase_behavior.h
+  example_behavior/patrol_behavior.h
+  example_behavior/search_behavior.h
   behavior_test.cpp
   executor/chassis_executor.cpp
   )

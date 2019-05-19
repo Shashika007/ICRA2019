@@ -32,4 +32,7 @@
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find roborts_bringup)/rviz/roborts.rviz" />
 
 
+  <node name="hit_avoidance" pkg="spin" type="spin_node"/>
+
+
 </launch>
