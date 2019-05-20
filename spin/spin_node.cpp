@@ -6,8 +6,8 @@
 #include "std_msgs/String.h"
 #include "geometry_msgs/PoseStamped.h"
 
-const int SPIN_RATE=1;
-const int COUNT_MAX=100;
+const int SPIN_RATE=10;
+const int COUNT_MAX=50;
 
 
 enum spinMode_t {DISABLED, SPININPLACE, DANCE};
