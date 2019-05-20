@@ -28,6 +28,7 @@
 #include "roborts_msgs/GimbalAngle.h"
 #include "roborts_msgs/GimbalRate.h"
 #include "roborts_msgs/ArmorDetectionAction.h"
+#include "std_msgs/String.h"
 
 #include "alg_factory/algorithm_factory.h"
 #include "io/io.h"
@@ -78,6 +79,11 @@ class ArmorDetectionNode {
    * @brief Publishing enemy pose information that been calculated by the armor detection algorithm.
    */
   void PublishMsgs();
+
+
+  void dancingCallback( const std_msgs::String::ConstPtr& spin);
+
+
   ~ArmorDetectionNode();
  protected:
  private:
@@ -113,6 +119,12 @@ class ArmorDetectionNode {
 
   //! control model
   GimbalContrl gimbal_control_;
+
+
+
+
+  bool dancing;//dancing flag
+
 };
 } //namespace roborts_detection
 

@@ -39,6 +39,18 @@ ArmorDetectionNode::ArmorDetectionNode():
   as_.start();
 }
 
+
+
+void ArmorDetectionNode::dancingCallback( const std_msgs::String::ConstPtr& spin){
+	if(spin->data[0]=='d')
+		dancing=true;
+	else
+		dancing=false;
+}
+
+
+
+
 ErrorInfo ArmorDetectionNode::Init() {
   enemy_info_pub_ = enemy_nh_.advertise<roborts_msgs::GimbalAngle>("cmd_gimbal_angle", 100);
   ArmorDetectionAlgorithms armor_detection_param;

@@ -5,7 +5,7 @@
 
 #include "std_msgs/String.h"
 #include "geometry_msgs/PoseStamped.h"
-
+#include "std_msgs/Int.h"
 
 enum spinMode_t {DISABLED, SPININPLACE, DANCE};
 
@@ -107,7 +107,10 @@ int main(int argc, char *argv[])
 	n.getParam("/spin/spin_rate",spinRate);
 	n.getParam("/spin/dance_angle",danceAngle);
 
-	ros::Publisher vel_Pub = n.advertise<geometry_msgs::Twist>("/cmd_vel", 100);
+	ros::Publisher vel_pub = n.advertise<geometry_msgs::Twist>("/cmd_vel", 100);
+
+	ros::Publisher angle_pub = n.advertise<std_msgs::Int>("/dance_angle", 100);
+
 
 	Spin Spinny;
 
@@ -124,10 +127,10 @@ int main(int argc, char *argv[])
 	{
 		switch(Spinny.getMode()){
 			case SPININPLACE:
-			Spinny.spinInPlace(vel_Pub, spinRate);
+			Spinny.spinInPlace(vel_pub, spinRate);
 			break;
 			case DANCE:
-			Spinny.dance(vel_Pub, spinRate, danceAngle);
+			Spinny.dance(vel_pub, spinRate, danceAngle);
 			break;
 			default:
 			break;
