@@ -6,9 +6,6 @@
 #include "std_msgs/String.h"
 #include "geometry_msgs/PoseStamped.h"
 
-const int SPIN_RATE=10;
-const int COUNT_MAX=50;
-
 
 enum spinMode_t {DISABLED, SPININPLACE, DANCE};
 
@@ -33,12 +30,12 @@ class Spin{
 
 
 
-		void spinInPlace( ros::Publisher &spin_pub ){
+		void spinInPlace( ros::Publisher &spin_pub, float speed ){
 			geometry_msgs::Twist spin;
 			geometry_msgs::Vector3 angular;
 			angular.x=0;
 			angular.y=0;
-			angular.z=SPIN_RATE;
+			angular.z=speed;
 
 			geometry_msgs::Vector3 linear;
 			linear.x=0;
@@ -79,13 +76,13 @@ class Spin{
 
 		}
 
-		void dance(  ros::Publisher &dance_pub){
+		void dance(  ros::Publisher &dance_pub,float danceSpeed, float danceAngle){
 			count++;
-			if (count>COUNT_MAX){
+			if (count>danceAngle){
 				direction*=-1;
 				count=0;
 			}
-			angular=SPIN_RATE*direction;
+			angular=danceSpeed*direction;
 
 			geometry_msgs::Twist shout;
 			geometry_msgs::Vector3 angularV;
@@ -106,6 +103,10 @@ int main(int argc, char *argv[])
 	ros::init(argc, argv, "comm");
 	ros::NodeHandle n;
 
+	float spinRate, danceAngle;
+	n.getParam("/spin/spin_rate",spinRate);
+	n.getParam("/spin/dance_angle",danceAngle);
+
 	ros::Publisher vel_Pub = n.advertise<geometry_msgs::Twist>("/cmd_vel", 100);
 
 	Spin Spinny;
@@ -123,10 +124,10 @@ int main(int argc, char *argv[])
 	{
 		switch(Spinny.getMode()){
 			case SPININPLACE:
-			Spinny.spinInPlace(vel_Pub);
+			Spinny.spinInPlace(vel_Pub, spinRate);
 			break;
 			case DANCE:
-			Spinny.dance(vel_Pub);
+			Spinny.dance(vel_Pub, spinRate, danceAngle);
 			break;
 			default:
 			break;

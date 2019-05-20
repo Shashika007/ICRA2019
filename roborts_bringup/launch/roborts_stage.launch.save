@@ -32,8 +32,8 @@
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find roborts_bringup)/rviz/roborts.rviz" />
 
 
-<rosparam command="load" file="$(find spin)/config/config.yaml" />
-  <node name="hit_avoidance" pkg="spin" type="spin_node"/>
-
+  <node name="hit_avoidance" pkg="spin" type="spin_node">
+	<rosparam command="load" file="$(find spin)/config/config.yaml" />	
+</node>
 
 </launch>
