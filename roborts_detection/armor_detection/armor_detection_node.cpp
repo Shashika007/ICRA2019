@@ -36,6 +36,10 @@ ArmorDetectionNode::ArmorDetectionNode():
     ROS_ERROR("armor_detection_node initalized failed!");
     node_state_ = roborts_common::FAILURE;
   }
+
+  ros::Subscriber dancingSub = nh_.subscribe("/spin"            ,100, &roborts_detection::ArmorDetectionNode::danceAngleCallback , this);
+  ros::Subscriber angleSub   = nh_.subscribe("/dance_anglengle" ,100, &roborts_detection::ArmorDetectionNode::dancingCallback    , this);
+  
   as_.start();
 }
 
@@ -48,6 +52,10 @@ void ArmorDetectionNode::dancingCallback( const std_msgs::String::ConstPtr& spin
 		dancing=false;
 }
 
+void ArmorDetectionNode::danceAngleCallback( const std_msgs::Float32::ConstPtr& danceAngle){
+  if (dancing)
+    gimbal_angle_.yaw_angle = gimbal_angle_.yaw_angle-danceAngle;
+}
 
 
 
@@ -246,6 +254,7 @@ int main(int argc, char **argv) {
   signal(SIGTERM,SignalHandler);
   ros::init(argc, argv, "armor_detection_node", ros::init_options::NoSigintHandler);
   roborts_detection::ArmorDetectionNode armor_detection;
+
   ros::AsyncSpinner async_spinner(1);
   async_spinner.start();
   ros::waitForShutdown();

@@ -5,7 +5,7 @@
 
 #include "std_msgs/String.h"
 #include "geometry_msgs/PoseStamped.h"
-#include "std_msgs/Int.h"
+#include "std_msgs/Float32.h"
 
 enum spinMode_t {DISABLED, SPININPLACE, DANCE};
 
@@ -76,7 +76,7 @@ class Spin{
 
 		}
 
-		void dance(  ros::Publisher &dance_pub,float danceSpeed, float danceAngle){
+		void dance(  ros::Publisher &dance_pub,float danceSpeed, float danceAngle, ros::Publisher &angle_pub){
 			count++;
 			if (count>danceAngle){
 				direction*=-1;
@@ -90,6 +90,10 @@ class Spin{
 			shout.angular=angularV;
 
 			dance_pub.publish (shout);
+
+			std_msgs::Float32 angleMsg;
+			angleMsg.data=angular*count;
+			angle_pub.publish (angleMsg);
 
 		}
 
@@ -109,7 +113,7 @@ int main(int argc, char *argv[])
 
 	ros::Publisher vel_pub = n.advertise<geometry_msgs::Twist>("/cmd_vel", 100);
 
-	ros::Publisher angle_pub = n.advertise<std_msgs::Int>("/dance_angle", 100);
+	ros::Publisher angle_pub = n.advertise<std_msgs::Float32>("/dance_angle", 100);
 
 
 	Spin Spinny;
@@ -130,7 +134,7 @@ int main(int argc, char *argv[])
 			Spinny.spinInPlace(vel_pub, spinRate);
 			break;
 			case DANCE:
-			Spinny.dance(vel_pub, spinRate, danceAngle);
+			Spinny.dance(vel_pub, spinRate, danceAngle, angle_pub);
 			break;
 			default:
 			break;

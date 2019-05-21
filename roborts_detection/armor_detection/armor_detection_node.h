@@ -29,6 +29,7 @@
 #include "roborts_msgs/GimbalRate.h"
 #include "roborts_msgs/ArmorDetectionAction.h"
 #include "std_msgs/String.h"
+#include "std_msgs/Float32.h"
 
 #include "alg_factory/algorithm_factory.h"
 #include "io/io.h"
@@ -81,7 +82,8 @@ class ArmorDetectionNode {
   void PublishMsgs();
 
 
-  void dancingCallback( const std_msgs::String::ConstPtr& spin);
+  void dancingCallback   ( const std_msgs::String::ConstPtr& spin);
+  void danceAngleCallback( const std_msgs::Float32::ConstPtr& danceAngle);
 
 
   ~ArmorDetectionNode();
