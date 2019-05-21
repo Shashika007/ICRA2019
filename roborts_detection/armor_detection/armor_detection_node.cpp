@@ -54,7 +54,7 @@ void ArmorDetectionNode::dancingCallback( const std_msgs::String::ConstPtr& spin
 
 void ArmorDetectionNode::danceAngleCallback( const std_msgs::Float32::ConstPtr& danceAngle){
   if (dancing)
-    gimbal_angle_.yaw_angle = gimbal_angle_.yaw_angle-danceAngle;
+    gimbal_angle_.yaw_angle -= danceAngle->data;
 }
 
 
